@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CLOUDFRONT_URL } from '../../../constants/ApiConstant';
 
-const AudioPlayerPublic = forwardRef(({ locale, onAudioEnded, onPauseAudio, onPlayAudio, showLogin }, ref) => {
+const AudioPlayerPublic = ({ locale, onAudioEnded, onPauseAudio, onPlayAudio, showLogin, onPlayerReady }) => {
   const [currentAudio, setCurrentAudio] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -11,25 +11,34 @@ const AudioPlayerPublic = forwardRef(({ locale, onAudioEnded, onPauseAudio, onPl
 
   const audioRef = useRef(null);
 
-  useImperativeHandle(ref, () => ({
-    setPlayObject: (audioObject) => {
-      if (!audioObject) return false;
+  const setPlayObject = (audioObject) => {
+    if (!audioObject) return false;
 
-      // Check if user needs to be authenticated for premium content
-      if (audioObject.price > 0 && audioObject.purchased !== true) {
-        showLogin();
-        return false;
-      }
-
-      setCurrentAudio(audioObject);
-      setIsVisible(true);
-      setIsPlaying(true);
-      return true;
-    },
-    pauseAudio: () => {
-      setIsPlaying(false);
+    // Check if user needs to be authenticated for premium content
+    if (audioObject.price > 0 && audioObject.purchased !== true) {
+      showLogin();
+      return false;
     }
-  }));
+
+    setCurrentAudio(audioObject);
+    setIsVisible(true);
+    setIsPlaying(true);
+    return true;
+  };
+
+  const pauseAudio = () => {
+    setIsPlaying(false);
+  };
+
+  // Expose player methods to parent via callback
+  useEffect(() => {
+    if (onPlayerReady) {
+      onPlayerReady({
+        setPlayObject,
+        pauseAudio
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (!audioRef.current || !currentAudio) return;
@@ -500,8 +509,6 @@ const AudioPlayerPublic = forwardRef(({ locale, onAudioEnded, onPauseAudio, onPl
       </div>
     </>
   );
-});
-
-AudioPlayerPublic.displayName = 'AudioPlayerPublic';
+};
 
 export default AudioPlayerPublic;

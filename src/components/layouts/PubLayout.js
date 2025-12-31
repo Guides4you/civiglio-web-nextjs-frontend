@@ -7,8 +7,14 @@ import dynamic from 'next/dynamic';
 import HeaderNew from '../layoutpub-components/HeaderNew';
 import Footer from '../layoutpub-components/Footer';
 
-// Dynamic import per componenti che richiedono browser APIs
-const AudioPlayerPublic = dynamic(() => import('../shared-components/AudioPlayerPublic'), { ssr: false });
+// Dynamic import per componenti che richiedono browser APIs con forwardRef support
+const AudioPlayerPublic = dynamic(
+  () => import('../shared-components/AudioPlayerPublic'),
+  {
+    ssr: false,
+    loading: () => null
+  }
+);
 
 export const CiviglioContext = React.createContext();
 export const CiviglioConsumer = CiviglioContext.Consumer;
@@ -19,7 +25,7 @@ export const PubLayout = ({ children, locale }) => {
   const { mobile } = router.query;
   const isMobile = mobile === 'true';
 
-  const audioPlayerRef = useRef(null);
+  const audioPlayerInstance = useRef(null);
   const loginDivRef = useRef(null);
   const audioPauseArray = useRef([]);
   const audioEndedFn = useRef(null);
@@ -28,6 +34,10 @@ export const PubLayout = ({ children, locale }) => {
 
   const mounted = useRef(false);
   const user = useRef(undefined);
+
+  const handlePlayerReady = (playerMethods) => {
+    audioPlayerInstance.current = playerMethods;
+  };
 
   const mapObj = f => obj =>
     Object.keys(obj).reduce((acc, key) => ({ ...acc, [key]: f(obj[key]) }), {});
@@ -78,11 +88,11 @@ export const PubLayout = ({ children, locale }) => {
       audioPauseArray.current.push(audioPauseFn.current);
     }
 
-    return audioPlayerRef.current?.setPlayObject(poi);
+    return audioPlayerInstance.current?.setPlayObject(poi);
   };
 
   const pauseAudio = () => {
-    audioPlayerRef.current?.pauseAudio();
+    audioPlayerInstance.current?.pauseAudio();
   };
 
   const audioEnd = () => {
@@ -144,7 +154,7 @@ export const PubLayout = ({ children, locale }) => {
             {children}
             {/* Audio Player - sticky bottom player */}
             <AudioPlayerPublic
-              ref={audioPlayerRef}
+              onPlayerReady={handlePlayerReady}
               locale={locale}
               onAudioEnded={audioEnd}
               onPauseAudio={audioPause}
