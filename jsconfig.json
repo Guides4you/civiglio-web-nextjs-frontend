@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/configs/*": ["./src/configs/*"],
+      "@/redux/*": ["./src/redux/*"],
+      "@/graphql/*": ["./src/graphql/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/constants/*": ["./src/constants/*"],
+      "@/lang/*": ["./src/lang/*"],
+      "@/auth/*": ["./src/auth/*"],
+      "@/models/*": ["./src/models/*"]
+    }
+  },
+  "exclude": ["node_modules", ".next"]
+}

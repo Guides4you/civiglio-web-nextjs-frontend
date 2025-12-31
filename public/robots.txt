@@ -1,0 +1,16 @@
+# Civiglio Web - Robots.txt
+User-agent: *
+Allow: /
+Allow: /guide/pub/*
+
+# Blocca sezioni private
+Disallow: /admin/*
+Disallow: /app/*
+Disallow: /auth/*
+Disallow: /test/*
+
+# API endpoints
+Disallow: /api/*
+
+# Sitemap
+Sitemap: https://www.civiglioweb.com/sitemap.xml
