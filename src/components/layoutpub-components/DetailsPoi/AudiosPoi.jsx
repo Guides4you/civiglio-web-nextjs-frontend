@@ -417,6 +417,13 @@ const AudiosPoi = ({ poi }) => {
           flex-shrink: 0;
         }
 
+        /* Fix: Override global like-icon styles to prevent appearing on map */
+        .audio-card :global(.like-icon) {
+          position: static !important;
+          right: auto !important;
+          z-index: auto !important;
+        }
+
         .card-description {
           margin-bottom: 16px;
           color: #6c757d;

@@ -26,6 +26,14 @@ const PicturesPoi = ({ poi, mapRef }) => {
     [emblaMainApi, emblaThumbsApi]
   );
 
+  const scrollPrev = useCallback(() => {
+    if (emblaThumbsApi) emblaThumbsApi.scrollPrev();
+  }, [emblaThumbsApi]);
+
+  const scrollNext = useCallback(() => {
+    if (emblaThumbsApi) emblaThumbsApi.scrollNext();
+  }, [emblaThumbsApi]);
+
   const onSelect = useCallback(() => {
     if (!emblaMainApi || !emblaThumbsApi) return;
     setSelectedIndex(emblaMainApi.selectedScrollSnap());
@@ -150,19 +158,33 @@ const PicturesPoi = ({ poi, mapRef }) => {
         {/* Thumbnails Navigation */}
         <div className="thumbnails-wrapper">
           <div className="container">
-            <div className="embla-thumbs">
-              <div className="embla-thumbs__viewport" ref={emblaThumbsRef}>
-                <div className="embla-thumbs__container">
-                  {images.map((img, i) => (
-                    <Thumb
-                      key={i}
-                      onClick={() => onThumbClick(i)}
-                      selected={i === selectedIndex}
-                      imgUrl={`${CLOUDFRONT_URL}/images/${img}`}
-                    />
-                  ))}
+            <div className="thumbnails-nav-container">
+              {images.length > 4 && (
+                <button className="thumb-nav-btn thumb-nav-prev" onClick={scrollPrev}>
+                  <i className="fa fa-chevron-left"></i>
+                </button>
+              )}
+
+              <div className="embla-thumbs">
+                <div className="embla-thumbs__viewport" ref={emblaThumbsRef}>
+                  <div className="embla-thumbs__container">
+                    {images.map((img, i) => (
+                      <Thumb
+                        key={i}
+                        onClick={() => onThumbClick(i)}
+                        selected={i === selectedIndex}
+                        imgUrl={`${CLOUDFRONT_URL}/images/${img}`}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              {images.length > 4 && (
+                <button className="thumb-nav-btn thumb-nav-next" onClick={scrollNext}>
+                  <i className="fa fa-chevron-right"></i>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -317,7 +339,42 @@ const PicturesPoi = ({ poi, mapRef }) => {
           z-index: 2;
         }
 
+        .thumbnails-nav-container {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .thumb-nav-btn {
+          flex-shrink: 0;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(10px);
+          border: none;
+          color: #667eea;
+          font-size: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .thumb-nav-btn:hover {
+          background: rgba(255, 255, 255, 1);
+          transform: scale(1.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .thumb-nav-btn:active {
+          transform: scale(0.95);
+        }
+
         :global(.embla-thumbs) {
+          flex: 1;
           overflow: hidden;
         }
 
@@ -328,6 +385,31 @@ const PicturesPoi = ({ poi, mapRef }) => {
         :global(.embla-thumbs__container) {
           display: flex;
           gap: 8px;
+        }
+
+        :global(.embla-thumbs__slide) {
+          flex: 0 0 80px;
+          min-width: 0;
+          cursor: pointer;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 3px solid transparent;
+          transition: all 0.3s ease;
+        }
+
+        :global(.embla-thumbs__slide:hover) {
+          border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        :global(.embla-thumbs__slide--selected) {
+          border-color: #667eea;
+          box-shadow: 0 0 12px rgba(102, 126, 234, 0.6);
+        }
+
+        :global(.embla-thumbs__slide img) {
+          width: 100%;
+          height: 60px;
+          object-fit: cover;
         }
 
         @media (max-width: 768px) {
