@@ -7,6 +7,7 @@ import PicturesPoi from '../../../../src/components/layoutpub-components/Details
 import AudiosPoi from '../../../../src/components/layoutpub-components/DetailsPoi/AudiosPoi';
 import DescriptionPoi from '../../../../src/components/layoutpub-components/DetailsPoi/DescriptionPoi';
 import Popular from '../../../../src/components/layoutpub-components/DetailsPoi/Popular';
+import QuickInfoCard from '../../../../src/components/layoutpub-components/DetailsPoi/QuickInfoCard';
 import IntlMessage from '../../../../src/components/util-components/IntlMessage';
 
 // Import dinamico della mappa per evitare problemi SSR
@@ -65,6 +66,7 @@ export default function POIDetailPage({ poi, popular, poiId }) {
               <div className="row">
                 <div className="col-md-12">
                   <PicturesPoi poi={poi} mapRef={mapRef} />
+                  <QuickInfoCard poi={poi} />
                   <AudiosPoi poi={poi} />
                   <DescriptionPoi poi={poi} />
                   <div ref={mapRef}>

@@ -128,167 +128,360 @@ const AudiosPoi = ({ poi }) => {
   }, [context]);
 
   return (
-    <div className="floor-plan property wprt-image-video w50 pro">
-      <h5>
+    <div className="audio-guides-section">
+      <h2 className="section-title">
+        <i className="fa fa-headphones section-icon"></i>
         <IntlMessage id="poidetail.audio" />
-      </h5>
-      {audios.map((a) => (
-        <div
-          className="property-nearby"
-          style={{
-            marginTop: "20px",
-            borderBottom: '1px solid rgba(128, 128, 128, 0.16)'
-          }}
-          key={a.SK}
-        >
-          <div className="row" style={{ display: "block" }}>
-            <div className="col-lg-12">
-              <div className="nearby-info mb-4">
-                <div className="nearby-list">
-                  <ul className="property-list list-unstyled mb-0">
-                    <li className="" style={{ display: "ruby-text" }}>
-                      <CiviglioConsumer>
-                        {(value) => {
-                          value.setAudioEndFn(() => setAudioPlayed(false));
+      </h2>
 
-                          return (
-                            <>
-                              {!audioPlayed && (
-                                <button
-                                  className="icon-wrap play-poi-btn play-poi"
-                                  href="#"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    const p = value.setPlayedObject(a);
+      <div className="audio-cards-grid">
+        {audios.map((a) => (
+          <div className="audio-card" key={a.SK}>
+            {/* Card Image */}
+            <div className="card-image">
+              <Image
+                preview={false}
+                src={`${CLOUDFRONT_URL}/images/${a.immagine}`}
+                alt={a.audioTitle}
+                className="audio-thumbnail"
+              />
+              <div className="card-badge-container">
+                {a.price === 0 ? (
+                  <span className="card-badge badge-free">FREE</span>
+                ) : (
+                  <span className="card-badge badge-premium">PREMIUM</span>
+                )}
+              </div>
+            </div>
 
-                                    recordPlayAudioEvent(a, a.price > 0);
+            {/* Card Content */}
+            <div className="card-content">
+              {/* Header with Play Button and Title */}
+              <div className="card-header">
+                <CiviglioConsumer>
+                  {(value) => {
+                    value.setAudioEndFn(() => setAudioPlayed(false));
 
-                                    if (p) {
-                                      setAudioPlayed(true);
-                                      setCurrentAudio(a);
-                                    }
-                                  }}
-                                >
-                                  <i className="fa fa-play"></i>
-                                </button>
-                              )}
+                    return (
+                      <button
+                        className={`play-button ${audioPlayed && currentAudio?.SK === a.SK ? 'playing' : ''}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
 
-                              {audioPlayed && (
-                                <button
-                                  className="icon-wrap play-poi-btn play-poi"
-                                  href="#"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    value.pauseAudio();
-                                    setAudioPlayed(false);
-                                    if (
-                                      a.audioFile !== currentAudio.audioFile
-                                    ) {
-                                      value.setPlayedObject(a);
-                                    }
-                                  }}
-                                >
-                                  <i className="fa fa-play"></i>
-                                </button>
-                              )}
-                            </>
+                          if (audioPlayed && currentAudio?.SK === a.SK) {
+                            value.pauseAudio();
+                            setAudioPlayed(false);
+                          } else {
+                            const p = value.setPlayedObject(a);
+                            recordPlayAudioEvent(a, a.price > 0);
+                            if (p) {
+                              setAudioPlayed(true);
+                              setCurrentAudio(a);
+                            }
+                          }
+                        }}
+                      >
+                        <i className={`fa ${audioPlayed && currentAudio?.SK === a.SK ? 'fa-pause' : 'fa-play'}`}></i>
+                      </button>
+                    );
+                  }}
+                </CiviglioConsumer>
+
+                <div className="card-title-wrapper">
+                  <h3 className="card-title">{a.audioTitle}</h3>
+                  <div className="card-meta">
+                    <span className="meta-item">
+                      <i className="fa fa-user"></i>
+                      <span
+                        className="channel-link"
+                        onClick={() => {
+                          router.push(
+                            `/guide/pub/canale/${a.proprietario_uuid}?mobile=${isMobile}`
                           );
                         }}
-                      </CiviglioConsumer>
-                      <h6
-                        className="mb-3 mr-2 title-poi"
-                        style={{ verticalAlign: "text-bottom" }}
                       >
-                        {a.audioTitle}
-                      </h6>
-                    </li>
-                    <li className="d-flex">
-                      <div className="recent-main">
-                        <div className="recent-img">
-                          <Image
-                            preview={false}
-                            width={100}
-                            src={`${CLOUDFRONT_URL}/images/${a.immagine}`}
-                            alt="poi audio"
-                          />
-                        </div>
-                        <div className="info-img audio-description">
-                          <h6
-                            style={{ color: '#3e82f7', cursor: 'pointer' }}
-                            onClick={() => {
-                              router.push(
-                                `/guide/pub/canale/${a.proprietario_uuid}?mobile=${isMobile}`
-                              );
-                            }}
-                          >
-                            {a.owner?.channelTitle || ""}
-                          </h6>
+                        {a.owner?.channelTitle || "Channel"}
+                      </span>
+                    </span>
+                    <span className="meta-item">
+                      <i className="fa fa-globe"></i>
+                      {a.lingua?.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
 
-                          <ExpandableParagraph text={a.description} />
+                <div className="card-actions-top">
+                  <LikeMediaIcon
+                    customClass="like-icon-modern"
+                    liked={a.liked}
+                    onLike={() => handleLike(a)}
+                    onDisLike={() => handleDislike(a)}
+                  />
+                </div>
+              </div>
 
-                          <div
-                            style={{ marginTop: "3px", fontStyle: "italic" }}
-                          >
-                            <div
-                              className="row"
-                              style={{ alignItems: "center" }}
-                            >
-                              <div className="col-3">
-                                <IntlMessage id="poidetail.audio.price" />
-                                <span
-                                  style={{
-                                    fontStyle: "italic",
-                                    color: "#189005",
-                                    paddingLeft: "5px",
-                                  }}
-                                >
-                                  {a.price === 0 ? "For free" : a.price}
-                                </span>
-                              </div>
+              {/* Description */}
+              <div className="card-description">
+                <ExpandableParagraph text={a.description} />
+              </div>
 
-                              <div className="col-7">
-                                <Button
-                                  type="link"
-                                  icon={
-                                    <FolderViewOutlined
-                                      style={{ verticalAlign: "text-top" }}
-                                    />
-                                  }
-                                  onClick={() => {
-                                    router.push(
-                                      `/guide/pub/canale/${a.proprietario_uuid}?mobile=${isMobile}`
-                                    );
-                                  }}
-                                >
-                                  <span>
-                                    <IntlMessage id="poidetail.channel" />
-                                  </span>
-                                </Button>
-                              </div>
-                              <div className="col-2">
-                                <div style={{ float: "right" }}>
-                                  <LikeMediaIcon
-                                    customClass="like-custom"
-                                    liked={a.liked}
-                                    onLike={() => handleLike(a)}
-                                    onDisLike={() => handleDislike(a)}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  </ul>
+              {/* Footer Actions */}
+              <div className="card-footer">
+                <div className="price-tag">
+                  {a.price === 0 ? (
+                    <span className="price-free">Gratuito</span>
+                  ) : (
+                    <span className="price-amount">€{a.price}</span>
+                  )}
+                </div>
+
+                <div className="card-actions">
+                  <Button
+                    type="link"
+                    size="small"
+                    icon={<FolderViewOutlined />}
+                    onClick={() => {
+                      router.push(
+                        `/guide/pub/canale/${a.proprietario_uuid}?mobile=${isMobile}`
+                      );
+                    }}
+                  >
+                    <IntlMessage id="poidetail.channel" />
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+
+      <style jsx>{`
+        .audio-guides-section {
+          margin-bottom: 48px;
+        }
+
+        .section-title {
+          font-size: 32px;
+          font-weight: 700;
+          color: #2c3e50;
+          margin-bottom: 24px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .section-icon {
+          font-size: 28px;
+          color: #667eea;
+        }
+
+        .audio-cards-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+
+        .audio-card {
+          background: #ffffff;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+          transition: all 0.3s ease;
+        }
+
+        .audio-card:hover {
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+          transform: translateY(-4px);
+        }
+
+        .card-image {
+          position: relative;
+          width: 100%;
+          height: 200px;
+          overflow: hidden;
+        }
+
+        :global(.audio-thumbnail) {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .card-badge-container {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+        }
+
+        .card-badge {
+          padding: 4px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .badge-free {
+          background: #52c41a;
+          color: #ffffff;
+        }
+
+        .badge-premium {
+          background: linear-gradient(135deg, #faad14 0%, #ff9c00 100%);
+          color: #ffffff;
+        }
+
+        .card-content {
+          padding: 20px;
+        }
+
+        .card-header {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          margin-bottom: 16px;
+        }
+
+        .play-button {
+          flex-shrink: 0;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: none;
+          color: #ffffff;
+          font-size: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .play-button:hover {
+          transform: scale(1.1);
+          box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .play-button.playing {
+          background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .card-title-wrapper {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .card-title {
+          font-size: 20px;
+          font-weight: 700;
+          color: #2c3e50;
+          margin: 0 0 8px 0;
+          line-height: 1.3;
+        }
+
+        .card-meta {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 14px;
+          color: #6c757d;
+        }
+
+        .meta-item i {
+          font-size: 14px;
+        }
+
+        .channel-link {
+          color: #3e82f7;
+          cursor: pointer;
+          transition: color 0.2s ease;
+        }
+
+        .channel-link:hover {
+          color: #667eea;
+          text-decoration: underline;
+        }
+
+        .card-actions-top {
+          flex-shrink: 0;
+        }
+
+        .card-description {
+          margin-bottom: 16px;
+          color: #6c757d;
+          font-size: 15px;
+          line-height: 1.6;
+        }
+
+        .card-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-top: 16px;
+          border-top: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .price-tag {
+          font-size: 16px;
+          font-weight: 700;
+        }
+
+        .price-free {
+          color: #52c41a;
+        }
+
+        .price-amount {
+          color: #faad14;
+        }
+
+        .card-actions {
+          display: flex;
+          gap: 8px;
+        }
+
+        @media (max-width: 768px) {
+          .section-title {
+            font-size: 24px;
+          }
+
+          .card-image {
+            height: 160px;
+          }
+
+          .card-content {
+            padding: 16px;
+          }
+
+          .play-button {
+            width: 40px;
+            height: 40px;
+            font-size: 14px;
+          }
+
+          .card-title {
+            font-size: 18px;
+          }
+
+          .card-meta {
+            gap: 12px;
+          }
+
+          .meta-item {
+            font-size: 13px;
+          }
+        }
+      `}</style>
     </div>
   );
 };
