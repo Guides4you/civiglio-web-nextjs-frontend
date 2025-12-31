@@ -26,13 +26,21 @@ const PicturesPoi = ({ poi, mapRef }) => {
     [emblaMainApi, emblaThumbsApi]
   );
 
-  const scrollPrev = useCallback(() => {
+  const scrollPrevThumb = useCallback(() => {
     if (emblaThumbsApi) emblaThumbsApi.scrollPrev();
   }, [emblaThumbsApi]);
 
-  const scrollNext = useCallback(() => {
+  const scrollNextThumb = useCallback(() => {
     if (emblaThumbsApi) emblaThumbsApi.scrollNext();
   }, [emblaThumbsApi]);
+
+  const scrollPrevMain = useCallback(() => {
+    if (emblaMainApi) emblaMainApi.scrollPrev();
+  }, [emblaMainApi]);
+
+  const scrollNextMain = useCallback(() => {
+    if (emblaMainApi) emblaMainApi.scrollNext();
+  }, [emblaMainApi]);
 
   const onSelect = useCallback(() => {
     if (!emblaMainApi || !emblaThumbsApi) return;
@@ -120,6 +128,18 @@ const PicturesPoi = ({ poi, mapRef }) => {
             </div>
           </div>
           <div className="hero-overlay"></div>
+
+          {/* Main Carousel Navigation Arrows */}
+          {images.length > 1 && (
+            <>
+              <button className="carousel-nav-btn carousel-prev" onClick={scrollPrevMain}>
+                <i className="fa fa-chevron-left"></i>
+              </button>
+              <button className="carousel-nav-btn carousel-next" onClick={scrollNextMain}>
+                <i className="fa fa-chevron-right"></i>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Content Over Images */}
@@ -160,7 +180,7 @@ const PicturesPoi = ({ poi, mapRef }) => {
           <div className="container">
             <div className="thumbnails-nav-container">
               {images.length > 4 && (
-                <button className="thumb-nav-btn thumb-nav-prev" onClick={scrollPrev}>
+                <button className="thumb-nav-btn thumb-nav-prev" onClick={scrollPrevThumb}>
                   <i className="fa fa-chevron-left"></i>
                 </button>
               )}
@@ -181,7 +201,7 @@ const PicturesPoi = ({ poi, mapRef }) => {
               </div>
 
               {images.length > 4 && (
-                <button className="thumb-nav-btn thumb-nav-next" onClick={scrollNext}>
+                <button className="thumb-nav-btn thumb-nav-next" onClick={scrollNextThumb}>
                   <i className="fa fa-chevron-right"></i>
                 </button>
               )}
@@ -213,6 +233,47 @@ const PicturesPoi = ({ poi, mapRef }) => {
           left: 0;
           width: 100%;
           height: 100%;
+          overflow: hidden;
+        }
+
+        /* Main Carousel Navigation Buttons */
+        .carousel-nav-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(10px);
+          border: none;
+          color: #667eea;
+          font-size: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+          z-index: 2;
+        }
+
+        .carousel-nav-btn:hover {
+          background: rgba(255, 255, 255, 1);
+          transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .carousel-nav-btn:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+
+        .carousel-prev {
+          left: 20px;
+        }
+
+        .carousel-next {
+          right: 20px;
         }
 
         :global(.hero-carousel .embla__viewport) {
@@ -443,6 +504,27 @@ const PicturesPoi = ({ poi, mapRef }) => {
 
           .thumbnails-wrapper {
             bottom: 12px;
+          }
+
+          /* Carousel navigation buttons on mobile */
+          .carousel-nav-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+          }
+
+          .carousel-prev {
+            left: 12px;
+          }
+
+          .carousel-next {
+            right: 12px;
+          }
+
+          .thumb-nav-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
           }
         }
 
