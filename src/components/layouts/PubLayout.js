@@ -1,14 +1,14 @@
 import React, { useRef, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { useRouter } from 'next/router';
-// import dynamic from 'next/dynamic';
+import dynamic from 'next/dynamic';
 
 // Componenti migrati e SSR-safe
 import HeaderNew from '../layoutpub-components/HeaderNew';
 import Footer from '../layoutpub-components/Footer';
 
 // Dynamic import per componenti che richiedono browser APIs
-// const AudioPlayerPublic = dynamic(() => import('../shared-components/AudioPlayerPublic'), { ssr: false });
+const AudioPlayerPublic = dynamic(() => import('../shared-components/AudioPlayerPublic'), { ssr: false });
 
 export const CiviglioContext = React.createContext();
 export const CiviglioConsumer = CiviglioContext.Consumer;
@@ -143,15 +143,15 @@ export const PubLayout = ({ children, locale }) => {
             }}
           >
             {children}
-            {/* AudioPlayer temporaneamente commentato - richiede componente */}
-            {/* <AudioPlayerPublic
+            {/* Audio Player - sticky bottom player */}
+            <AudioPlayerPublic
               ref={audioPlayerRef}
               locale={locale}
               onAudioEnded={audioEnd}
               onPauseAudio={audioPause}
               onPlayAudio={audioPlay}
               showLogin={showLoginFn}
-            /> */}
+            />
           </CiviglioProvider>
         </div>
       </div>
