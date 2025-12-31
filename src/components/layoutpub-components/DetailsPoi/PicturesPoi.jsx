@@ -86,22 +86,37 @@ const PicturesPoi = ({ poi, mapRef }) => {
         <meta name="keywords" content={poi.titolo} />
       </Head>
 
-      {/* Modern Hero Section */}
+      {/* Hero Section with Integrated Carousel */}
       <section className="hero-section">
-        <div className="hero-image-wrapper">
-          <Image
-            preview={false}
-            src={`${CLOUDFRONT_URL}/images/${poi.immagine}`}
-            alt={poi.titolo}
-            className="hero-image"
-          />
+        {/* Breadcrumbs at top */}
+        <div className="breadcrumb-wrapper">
+          <div className="container">
+            <Breadcrumbs items={breadcrumbItems} />
+          </div>
+        </div>
+
+        {/* Carousel Images */}
+        <div className="hero-carousel">
+          <div className="embla__viewport" ref={emblaMainRef}>
+            <div className="embla__container">
+              {images.map((img, i) => (
+                <div className="embla__slide" key={i}>
+                  <Image
+                    preview={false}
+                    src={`${CLOUDFRONT_URL}/images/${img}`}
+                    alt={poi.titolo}
+                    className="hero-image"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="hero-overlay"></div>
         </div>
 
+        {/* Content Over Images */}
         <div className="hero-content">
           <div className="container">
-            <Breadcrumbs items={breadcrumbItems} />
-
             <h1 className="hero-title">{poi.titolo}</h1>
 
             <div className="hero-meta">
@@ -128,14 +143,26 @@ const PicturesPoi = ({ poi, mapRef }) => {
                 <i className="fa fa-share-alt"></i>
                 <span>Condividi</span>
               </button>
-              <button className="action-btn" title="Salva nei preferiti">
-                <i className="fa fa-heart-o"></i>
-                <span>Salva</span>
-              </button>
-              <button className="action-btn" title="Scarica">
-                <i className="fa fa-download"></i>
-                <span>Scarica</span>
-              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Thumbnails Navigation */}
+        <div className="thumbnails-wrapper">
+          <div className="container">
+            <div className="embla-thumbs">
+              <div className="embla-thumbs__viewport" ref={emblaThumbsRef}>
+                <div className="embla-thumbs__container">
+                  {images.map((img, i) => (
+                    <Thumb
+                      key={i}
+                      onClick={() => onThumbClick(i)}
+                      selected={i === selectedIndex}
+                      imgUrl={`${CLOUDFRONT_URL}/images/${img}`}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -145,12 +172,20 @@ const PicturesPoi = ({ poi, mapRef }) => {
         .hero-section {
           position: relative;
           width: 100%;
-          height: 500px;
+          height: 600px;
           margin-bottom: 40px;
-          overflow: hidden;
+          background: #000;
         }
 
-        .hero-image-wrapper {
+        .breadcrumb-wrapper {
+          position: absolute;
+          top: 20px;
+          left: 0;
+          right: 0;
+          z-index: 3;
+        }
+
+        .hero-carousel {
           position: absolute;
           top: 0;
           left: 0;
@@ -158,7 +193,27 @@ const PicturesPoi = ({ poi, mapRef }) => {
           height: 100%;
         }
 
-        :global(.hero-image) {
+        :global(.hero-carousel .embla__viewport) {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        :global(.hero-carousel .embla__container) {
+          display: flex;
+          height: 100%;
+        }
+
+        :global(.hero-carousel .embla__slide) {
+          flex: 0 0 100%;
+          min-width: 0;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        :global(.hero-carousel .hero-image) {
           width: 100%;
           height: 100%;
           object-fit: cover;
@@ -172,26 +227,26 @@ const PicturesPoi = ({ poi, mapRef }) => {
           height: 100%;
           background: linear-gradient(
             to bottom,
-            rgba(0, 0, 0, 0.2) 0%,
+            rgba(0, 0, 0, 0.3) 0%,
             rgba(0, 0, 0, 0.5) 50%,
-            rgba(0, 0, 0, 0.8) 100%
+            rgba(0, 0, 0, 0.7) 100%
           );
+          z-index: 1;
         }
 
         .hero-content {
-          position: relative;
-          height: 100%;
-          display: flex;
-          align-items: flex-end;
-          padding-bottom: 40px;
-          z-index: 1;
+          position: absolute;
+          bottom: 120px;
+          left: 0;
+          right: 0;
+          z-index: 2;
         }
 
         .hero-title {
           font-size: 48px;
           font-weight: 700;
           color: #ffffff;
-          margin: 16px 0;
+          margin: 0 0 16px 0;
           line-height: 1.2;
           text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
@@ -254,13 +309,38 @@ const PicturesPoi = ({ poi, mapRef }) => {
           font-size: 16px;
         }
 
+        .thumbnails-wrapper {
+          position: absolute;
+          bottom: 20px;
+          left: 0;
+          right: 0;
+          z-index: 2;
+        }
+
+        :global(.embla-thumbs) {
+          overflow: hidden;
+        }
+
+        :global(.embla-thumbs__viewport) {
+          overflow: hidden;
+        }
+
+        :global(.embla-thumbs__container) {
+          display: flex;
+          gap: 8px;
+        }
+
         @media (max-width: 768px) {
           .hero-section {
-            height: 400px;
+            height: 500px;
+          }
+
+          .breadcrumb-wrapper {
+            top: 12px;
           }
 
           .hero-content {
-            padding-bottom: 24px;
+            bottom: 100px;
           }
 
           .hero-title {
@@ -278,53 +358,26 @@ const PicturesPoi = ({ poi, mapRef }) => {
           .action-btn {
             padding: 10px 16px;
           }
+
+          .thumbnails-wrapper {
+            bottom: 12px;
+          }
         }
 
         @media (max-width: 480px) {
           .hero-section {
-            height: 350px;
+            height: 450px;
           }
 
           .hero-title {
             font-size: 28px;
           }
+
+          .hero-content {
+            bottom: 90px;
+          }
         }
       `}</style>
-
-      <div className="embla">
-        <div className="embla__viewport" ref={emblaMainRef}>
-          <div className="embla__container">
-            {images.map((img, i) => (
-              <div className="embla__slide" key={i}>
-                <center>
-                  <Image
-                    preview={false}
-                    width={"auto"}
-                    src={`${CLOUDFRONT_URL}/images/${img}`}
-                    alt={poi.titolo}
-                    className="img-fluid"
-                  />
-                </center>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="embla-thumbs">
-          <div className="embla-thumbs__viewport" ref={emblaThumbsRef}>
-            <div className="embla-thumbs__container">
-              {images.map((img, i) => (
-                <Thumb
-                  key={i}
-                  onClick={() => onThumbClick(i)}
-                  selected={i === selectedIndex}
-                  imgUrl={`${CLOUDFRONT_URL}/images/${img}`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
     </>
   );
 };
