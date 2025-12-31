@@ -14,18 +14,17 @@ export const CiviglioContext = React.createContext();
 export const CiviglioConsumer = CiviglioContext.Consumer;
 const CiviglioProvider = CiviglioContext.Provider;
 
-const audioPlayerRef = React.createRef();
-const loginDivRef = React.createRef();
-
 export const PubLayout = ({ children, locale }) => {
   const router = useRouter();
   const { mobile } = router.query;
   const isMobile = mobile === 'true';
 
-  const audioPauseArray = [];
-  let audioEndedFn = null;
-  let audioPauseFn = null;
-  let audioPlayFn = null;
+  const audioPlayerRef = useRef(null);
+  const loginDivRef = useRef(null);
+  const audioPauseArray = useRef([]);
+  const audioEndedFn = useRef(null);
+  const audioPauseFn = useRef(null);
+  const audioPlayFn = useRef(null);
 
   const mounted = useRef(false);
   const user = useRef(undefined);
@@ -48,7 +47,7 @@ export const PubLayout = ({ children, locale }) => {
     if (nextAuthState === AuthState.SignedIn) {
       if (mounted.current) {
         user.current = authData;
-        if (loginDivRef.current) {
+        if (loginDivRef?.current) {
           loginDivRef.current.classList.remove('active');
         }
       }
@@ -70,13 +69,13 @@ export const PubLayout = ({ children, locale }) => {
   };
 
   const setPlayedObjectFn = (poi) => {
-    if (audioPauseArray.length > 0) {
-      const f = audioPauseArray.pop();
+    if (audioPauseArray.current.length > 0) {
+      const f = audioPauseArray.current.pop();
       f();
     }
 
-    if (audioPauseFn) {
-      audioPauseArray.push(audioPauseFn);
+    if (audioPauseFn.current) {
+      audioPauseArray.current.push(audioPauseFn.current);
     }
 
     return audioPlayerRef.current?.setPlayObject(poi);
@@ -87,30 +86,30 @@ export const PubLayout = ({ children, locale }) => {
   };
 
   const audioEnd = () => {
-    if (audioEndedFn) audioEndedFn();
+    if (audioEndedFn.current) audioEndedFn.current();
   };
 
   const audioPause = () => {
-    if (audioPauseFn) {
-      audioPauseArray.push(audioPauseFn);
-      audioPauseFn();
+    if (audioPauseFn.current) {
+      audioPauseArray.current.push(audioPauseFn.current);
+      audioPauseFn.current();
     }
   };
 
   const audioPlay = () => {
-    if (audioPlayFn) audioPlayFn();
+    if (audioPlayFn.current) audioPlayFn.current();
   };
 
   const setAudioEndFn = (fn) => {
-    audioEndedFn = fn;
+    audioEndedFn.current = fn;
   };
 
   const setAudioPauseFn = (fn) => {
-    audioPauseFn = fn;
+    audioPauseFn.current = fn;
   };
 
   const setAudioPlayFn = (fn) => {
-    audioPlayFn = fn;
+    audioPlayFn.current = fn;
   };
 
   const showLoginFn = () => {
