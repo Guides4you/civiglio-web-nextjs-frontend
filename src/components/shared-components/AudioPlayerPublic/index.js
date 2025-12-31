@@ -14,10 +14,15 @@ const AudioPlayerPublic = ({ locale, onAudioEnded, onPauseAudio, onPlayAudio, sh
   const setPlayObject = (audioObject) => {
     if (!audioObject) return false;
 
-    // Check if user needs to be authenticated for premium content
-    if (audioObject.price > 0 && audioObject.purchased !== true) {
-      showLogin();
-      return false;
+    // For premium content without purchase:
+    // - If audioExtract exists, play the extract
+    // - Otherwise, show login
+    if (audioObject.price > 0 && !audioObject.purchased) {
+      if (!audioObject.audioExtract) {
+        showLogin();
+        return false;
+      }
+      // Will play audioExtract instead
     }
 
     setCurrentAudio(audioObject);
@@ -65,7 +70,13 @@ const AudioPlayerPublic = ({ locale, onAudioEnded, onPauseAudio, onPlayAudio, sh
   useEffect(() => {
     if (!currentAudio || !audioRef.current) return;
 
-    const audioUrl = `${CLOUDFRONT_URL}/media/${currentAudio.media}`;
+    // Use audioExtract for unpurchased premium content, otherwise use full audioFile
+    const audioFileName = (currentAudio.price > 0 && !currentAudio.purchased && currentAudio.audioExtract)
+      ? currentAudio.audioExtract
+      : currentAudio.audioFile;
+
+    const audioUrl = `${CLOUDFRONT_URL}/media/${audioFileName}`;
+    console.log('Loading audio from:', audioUrl);
     audioRef.current.src = audioUrl;
     audioRef.current.load();
 
