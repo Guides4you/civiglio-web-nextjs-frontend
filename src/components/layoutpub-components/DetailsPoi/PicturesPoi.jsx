@@ -262,6 +262,13 @@ const PicturesPoi = ({ poi, mapRef }) => {
           left: 0;
           right: 0;
           z-index: 2;
+          max-width: 100%;
+        }
+
+        .hero-content :global(.container) {
+          max-width: 100%;
+          padding-right: 15px;
+          padding-left: 15px;
         }
 
         .hero-title {
@@ -277,6 +284,9 @@ const PicturesPoi = ({ poi, mapRef }) => {
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           text-overflow: ellipsis;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          max-width: 100%;
         }
 
         .hero-meta {
@@ -427,6 +437,17 @@ const PicturesPoi = ({ poi, mapRef }) => {
           width: 100%;
           height: 60px;
           object-fit: cover;
+        }
+
+        /* Desktop: Limit content width to prevent overlap with sidebar */
+        @media (min-width: 992px) {
+          .hero-content :global(.container) {
+            max-width: 90%;
+          }
+
+          .hero-title {
+            max-width: 95%;
+          }
         }
 
         @media (max-width: 768px) {

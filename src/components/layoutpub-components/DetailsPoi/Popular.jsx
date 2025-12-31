@@ -16,7 +16,7 @@ const Popular = ({ pois }) => {
     const isMobile = router.query.mobile || false;
     const titolo = encodeURI(replace(poi.audioMediaItems.items[0].audioTitle, /\s/g, '-'));
     router.push({
-      pathname: `${APP_PUBLIC_PATH}/detail/${poi.audioMediaItems.items[0].PK}/${titolo}`,
+      pathname: `${APP_PUBLIC_PATH}/pub/detail/${poi.audioMediaItems.items[0].PK}/${titolo}`,
       query: { mobile: isMobile }
     });
   };
