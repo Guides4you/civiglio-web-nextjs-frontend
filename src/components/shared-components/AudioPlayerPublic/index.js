@@ -75,7 +75,7 @@ const AudioPlayerPublic = ({ locale, onAudioEnded, onPauseAudio, onPlayAudio, sh
       ? currentAudio.audioExtract
       : currentAudio.audioFile;
 
-    const audioUrl = `${CLOUDFRONT_URL}/media/${audioFileName}`;
+    const audioUrl = `${CLOUDFRONT_URL}/audio/${audioFileName}`;
     console.log('Loading audio from:', audioUrl);
     audioRef.current.src = audioUrl;
     audioRef.current.load();
