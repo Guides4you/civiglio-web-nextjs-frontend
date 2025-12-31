@@ -126,6 +126,13 @@ const AudiosPoi = ({ poi }) => {
     }
   }, [context]);
 
+  // Update audio items when poi changes
+  useEffect(() => {
+    setPoiAudios(poi.audioMediaItems);
+    setAudioPlayed(false);
+    setCurrentAudio(undefined);
+  }, [poi.audioMediaItems, poi.PK]);
+
   return (
     <div className="audio-guides-section">
       <h2 className="section-title">

@@ -59,16 +59,16 @@ export default function POIDetailPage({ poi, popular, poiId }) {
         {poi.immagine && <meta property="og:image" content={poi.immagine} />}
       </Head>
 
-      <section className="single-proper blog details">
+      <section className="single-proper blog details" key={poiId}>
         <div className="container">
           <div className="row">
             <div className="col-lg-8 col-md-12 blog-pots">
               <div className="row">
                 <div className="col-md-12">
-                  <PicturesPoi poi={poi} mapRef={mapRef} />
-                  <QuickInfoCard poi={poi} />
-                  <AudiosPoi poi={poi} />
-                  <DescriptionPoi poi={poi} />
+                  <PicturesPoi poi={poi} mapRef={mapRef} key={`pictures-${poiId}`} />
+                  <QuickInfoCard poi={poi} key={`quickinfo-${poiId}`} />
+                  <AudiosPoi poi={poi} key={`audios-${poiId}`} />
+                  <DescriptionPoi poi={poi} key={`description-${poiId}`} />
                   <div ref={mapRef}>
                     <MapSection poi={poi} />
                   </div>
