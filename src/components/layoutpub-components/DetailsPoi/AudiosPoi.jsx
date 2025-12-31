@@ -4,7 +4,6 @@ import React, { useContext, useEffect, useState } from "react";
 import { CiviglioConsumer, CiviglioContext } from "../../layouts/PubLayout";
 import { FolderViewOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
-import LikeMediaIcon from "../LikeIconMedia";
 import IntlMessage from "../../util-components/IntlMessage";
 import ExpandableParagraph from "./ExpandableParagraph";
 import { useRouter } from 'next/router';
@@ -212,12 +211,21 @@ const AudiosPoi = ({ poi }) => {
                 </div>
 
                 <div className="card-actions-top">
-                  <LikeMediaIcon
-                    customClass="like-icon-modern"
-                    liked={a.liked}
-                    onLike={() => handleLike(a)}
-                    onDisLike={() => handleDislike(a)}
-                  />
+                  <button
+                    className={`like-button ${a.liked ? 'liked' : ''}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (a.liked) {
+                        handleDislike(a);
+                      } else {
+                        handleLike(a);
+                      }
+                    }}
+                    title={a.liked ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+                  >
+                    <i className={`fa ${a.liked ? 'fa-heart' : 'fa-heart-o'}`}></i>
+                  </button>
                 </div>
               </div>
 
@@ -417,11 +425,51 @@ const AudiosPoi = ({ poi }) => {
           flex-shrink: 0;
         }
 
+        /* Modern Like Button */
+        .like-button {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: #f0f0f0;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+
+        .like-button i {
+          font-size: 18px;
+          color: #9d9d9d;
+          transition: all 0.3s ease;
+        }
+
+        .like-button:hover {
+          background: #ffe6e6;
+          transform: scale(1.1);
+        }
+
+        .like-button:hover i {
+          color: #ff6b6b;
+        }
+
+        .like-button.liked {
+          background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        .like-button.liked i {
+          color: #ffffff;
+        }
+
+        .like-button:active {
+          transform: scale(0.9);
+        }
+
         /* Fix: Override global like-icon styles to prevent appearing on map */
         .audio-card :global(.like-icon) {
-          position: static !important;
-          right: auto !important;
-          z-index: auto !important;
+          display: none !important;
         }
 
         .card-description {
@@ -454,7 +502,30 @@ const AudiosPoi = ({ poi }) => {
 
         .card-actions {
           display: flex;
+          align-items: center;
           gap: 8px;
+        }
+
+        .card-actions :global(.ant-btn) {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 12px;
+          height: auto;
+          font-size: 14px;
+          color: #667eea;
+          transition: all 0.2s ease;
+        }
+
+        .card-actions :global(.ant-btn:hover) {
+          color: #764ba2;
+          transform: translateX(2px);
+        }
+
+        .card-actions :global(.ant-btn .anticon) {
+          font-size: 16px;
+          display: flex;
+          align-items: center;
         }
 
         @media (max-width: 768px) {

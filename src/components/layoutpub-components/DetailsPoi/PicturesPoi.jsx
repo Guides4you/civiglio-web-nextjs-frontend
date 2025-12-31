@@ -199,6 +199,12 @@ const PicturesPoi = ({ poi, mapRef }) => {
           background: #000;
         }
 
+        /* Hide global like-icon in hero section */
+        .hero-section :global(.like-icon),
+        .hero-section :global(span.like-icon) {
+          display: none !important;
+        }
+
         .breadcrumb-wrapper {
           position: absolute;
           top: 20px;
