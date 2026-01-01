@@ -45,8 +45,8 @@ const Footer = () => {
                         <i className="fa fa-map-marker" aria-hidden="true"></i>
                       </div>
                       <div className="contact-text">
-                        <p>Via Guglielmo Marconi 470</p>
-                        <p>Quattromiglia, Rende (CS) 87036</p>
+                        <p>C.da Gidora snc</p>
+                        <p>Luzzi (CS) 87040</p>
                       </div>
                     </li>
                     <li className="contact-item">
@@ -123,7 +123,7 @@ const Footer = () => {
               <ul className="social-links">
                 <li>
                   <a
-                    href="https://www.facebook.com/Guides4youSrls"
+                    href="https://www.facebook.com/civiglio2"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Facebook"

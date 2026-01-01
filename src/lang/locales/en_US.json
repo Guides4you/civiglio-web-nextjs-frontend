@@ -21,6 +21,15 @@
 	"poidetail.audio.price": "Price:",
 	"poidetail.channel": "Go to Channel",
 	"poidetail.popular": "Popular POIs",
+	"poidetail.newcontent": "Add new content",
+	"poidetail.newcontent.buttom": "New Content",
+	"poidetail.newcontent.description": "Insert your content for free and you decide the selling price",
+	"poidetail.newcontent.error": "Function available only from PC",
 	"channel.address.poi": "POI Address",
+	"channel.follow": "Follow",
+	"channel.publish.content": "Published content",
+	"channel.followers": "Followers",
+	"channel.nationality": "Nationality",
+	"channel.registered": "Registered",
 	"profile.image.add": "Add Profile Image"
 }

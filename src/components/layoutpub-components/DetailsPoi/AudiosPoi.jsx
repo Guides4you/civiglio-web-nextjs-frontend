@@ -6,6 +6,7 @@ import { FolderViewOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import IntlMessage from "../../util-components/IntlMessage";
 import ExpandableParagraph from "./ExpandableParagraph";
+import NewContent from "./NewContent";
 import { useRouter } from 'next/router';
 
 const AudiosPoi = ({ poi }) => {
@@ -139,6 +140,9 @@ const AudiosPoi = ({ poi }) => {
         <i className="fa fa-headphones section-icon"></i>
         <IntlMessage id="poidetail.audio" />
       </h2>
+
+      {/* Call-to-action to add new content */}
+      <NewContent />
 
       <div className="audio-cards-grid">
         {audios.map((a) => (

@@ -21,6 +21,15 @@
 	"poidetail.audio.price": "Prix:",
 	"poidetail.channel": "Aller au Canal",
 	"poidetail.popular": "POIs Populaires",
+	"poidetail.newcontent": "Ajouter un nouveau contenu",
+	"poidetail.newcontent.buttom": "Nouveau contenu",
+	"poidetail.newcontent.description": "Insérez votre contenu gratuitement et vous décidez du prix de vente",
+	"poidetail.newcontent.error": "Fonction disponible uniquement à partir d'un PC",
 	"channel.address.poi": "Adresse du POI",
+	"channel.follow": "Suivre",
+	"channel.publish.content": "Contenu publié",
+	"channel.followers": "Suiveurs",
+	"channel.nationality": "Nationalité",
+	"channel.registered": "Enregistré",
 	"profile.image.add": "Ajouter Image de Profil"
 }
