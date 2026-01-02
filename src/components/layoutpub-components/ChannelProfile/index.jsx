@@ -29,31 +29,65 @@ const ChannelProfile = ({ profileInfo: initialProfileInfo, medias: initialMedias
   };
 
   // Check if user is following this channel
-  useEffect(() => {
-    const checkFollowing = async () => {
-      const user = getUserAuth();
-      if (user?.current && profileInfo) {
-        try {
-          const response = await API.graphql(
-            graphqlOperation(getFollowedCanaleByUser, {
-              canale: profileInfo.PK,
-              user: user.current.attributes.sub,
-            })
-          );
+  const checkFollowing = async () => {
+    const user = getUserAuth();
+    if (user?.current && profileInfo) {
+      try {
+        const response = await API.graphql(
+          graphqlOperation(getFollowedCanaleByUser, {
+            canale: profileInfo.PK,
+            user: user.current.attributes.sub,
+          })
+        );
 
-          if (response.data.getFollowedCanaleByUser) {
-            setIsFollowing(true);
-          } else {
-            setIsFollowing(false);
-          }
-        } catch (error) {
-          console.error('Error checking follow status:', error);
+        if (response.data.getFollowedCanaleByUser) {
+          setIsFollowing(true);
+        } else {
+          setIsFollowing(false);
         }
+      } catch (error) {
+        console.error('Error checking follow status:', error);
       }
+    } else {
+      setIsFollowing(false);
+    }
+  };
+
+  useEffect(() => {
+    checkFollowing();
+  }, [profileInfo, context.authChanged]);
+
+  // Listen to auth events
+  useEffect(() => {
+    let hubListener;
+
+    const setupAuthListener = async () => {
+      const { Hub } = await import('aws-amplify');
+
+      hubListener = Hub.listen('auth', async (data) => {
+        const { payload } = data;
+        console.log('ChannelProfile: Auth event received:', payload.event);
+
+        if (payload.event === 'signIn') {
+          // User just logged in, check follow status
+          await checkFollowing();
+        } else if (payload.event === 'signOut') {
+          // User logged out, reset follow status
+          setIsFollowing(false);
+        }
+      });
     };
 
-    checkFollowing();
-  }, [profileInfo, context]);
+    setupAuthListener();
+
+    return () => {
+      if (hubListener) {
+        import('aws-amplify').then(({ Hub }) => {
+          Hub.remove('auth', hubListener);
+        });
+      }
+    };
+  }, [profileInfo]);
 
   // Handle follow/unfollow
   const handleFollowToggle = async (checked) => {

@@ -27,18 +27,19 @@ const AudiosPoi = ({ poi }) => {
   const reloadAudioItems = async () => {
     try {
       const { API, graphqlOperation } = await import('aws-amplify');
-      const { GRAPHQL_AUTH_MODE } = await import('@aws-amplify/api-graphql');
       const { getGeoPoi } = await import('../../../graphql/publicQueries');
 
-      const result = await API.graphql({
-        query: getGeoPoi,
-        authMode: GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POOLS,
-        variables: { rangeKey: poi.PK, SK: poi.SK },
-      });
+      const result = await API.graphql(
+        graphqlOperation(getGeoPoi, { rangeKey: poi.PK, SK: poi.SK })
+      );
+
+      console.log('Audio items reloaded with auth, liked status:',
+        result.data.getGeoPoi.audioMediaItems.items.map(a => ({ title: a.audioTitle, liked: a.liked }))
+      );
 
       setPoiAudios(result.data.getGeoPoi.audioMediaItems);
     } catch (e) {
-      console.log(e);
+      console.error('Error reloading audio items:', e);
     }
   };
 
@@ -82,6 +83,8 @@ const AudiosPoi = ({ poi }) => {
         const { API, graphqlOperation } = await import('aws-amplify');
         const { addLikeMedia } = await import('../../../graphql/publicMutations');
 
+        console.log('Adding like to audio:', audio.audioTitle);
+
         await API.graphql(
           graphqlOperation(addLikeMedia, {
             PK: audio.PK,
@@ -90,9 +93,10 @@ const AudiosPoi = ({ poi }) => {
           })
         );
 
-        reloadAudioItems();
+        console.log('Like added successfully, reloading...');
+        await reloadAudioItems();
       } catch (e) {
-        console.log(e);
+        console.error('Error adding like:', e);
       }
     }
   };
@@ -106,6 +110,8 @@ const AudiosPoi = ({ poi }) => {
         const { API, graphqlOperation } = await import('aws-amplify');
         const { removeLikeMedia } = await import('../../../graphql/publicMutations');
 
+        console.log('Removing like from audio:', audio.audioTitle);
+
         await API.graphql(
           graphqlOperation(removeLikeMedia, {
             PK: audio.PK,
@@ -114,25 +120,68 @@ const AudiosPoi = ({ poi }) => {
           })
         );
 
-        reloadAudioItems();
+        console.log('Like removed successfully, reloading...');
+        await reloadAudioItems();
       } catch (e) {
-        console.log(e);
+        console.error('Error removing like:', e);
       }
     }
   };
 
+  // Listen to auth events and reload audio items when user logs in/out
   useEffect(() => {
+    let hubListener;
+    let mounted = true;
+
+    const setupAuthListener = async () => {
+      const { Hub } = await import('aws-amplify');
+
+      hubListener = Hub.listen('auth', async (data) => {
+        const { payload } = data;
+        console.log('AudiosPoi: Auth event received:', payload.event);
+
+        if (payload.event === 'signIn' || payload.event === 'signOut') {
+          // Reload audio items to get updated liked status
+          if (payload.event === 'signIn' && mounted) {
+            await reloadAudioItems();
+          } else if (mounted) {
+            // Reset to initial state without liked status
+            setPoiAudios(poi.audioMediaItems);
+          }
+        }
+      });
+    };
+
+    setupAuthListener();
+
+    // ALWAYS check on mount if user is authenticated and reload
+    // This handles the case when user navigates back to a cached page
     if (isUserAuthenticated().current) {
+      console.log('AudiosPoi: User is authenticated on mount, reloading audio items');
       reloadAudioItems();
     }
-  }, [context]);
 
-  // Update audio items when poi changes
+    return () => {
+      mounted = false;
+      if (hubListener) {
+        import('aws-amplify').then(({ Hub }) => {
+          Hub.remove('auth', hubListener);
+        });
+      }
+    };
+  }, [poi.PK]); // Re-run when POI changes
+
+  // Update audio items when poi changes or auth changes
   useEffect(() => {
     setPoiAudios(poi.audioMediaItems);
     setAudioPlayed(false);
     setCurrentAudio(undefined);
-  }, [poi.audioMediaItems, poi.PK]);
+
+    // Reload with auth if user is logged in
+    if (isUserAuthenticated().current) {
+      reloadAudioItems();
+    }
+  }, [poi.audioMediaItems, poi.PK, context.authChanged]);
 
   return (
     <div className="audio-guides-section">

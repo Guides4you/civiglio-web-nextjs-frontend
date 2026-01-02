@@ -9,10 +9,10 @@ import AppLocale from '../src/lang';
 import ErrorBoundary from '../src/components/util-components/ErrorBoundary';
 
 // Import layouts
-import AppLayout from '../src/components/layouts/AppLayout';
 import PubLayout from '../src/components/layouts/PubLayout';
 import BackendLayout from '../src/components/layouts/BackendLayout';
 import AuthLayout from '../src/components/layouts/AuthLayout';
+// Note: AppLayout is imported directly in /app/* pages to avoid double wrapping
 
 // Import Ant Design CSS
 import 'antd/dist/antd.css';
@@ -33,9 +33,8 @@ const AppContent = ({ Component, pageProps, pathname }) => {
     if (pathname.startsWith('/admin')) {
       return (page) => <BackendLayout>{page}</BackendLayout>;
     }
-    if (pathname.startsWith('/app')) {
-      return (page) => <AppLayout>{page}</AppLayout>;
-    }
+    // Note: /app/* pages use AppLayout directly in their components
+    // to avoid double wrapping
     // Default: no layout (per homepage e altre pagine)
     return (page) => page;
   };

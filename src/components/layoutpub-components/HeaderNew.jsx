@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import NavLanguage from './NavLanguage';
 import { LOGO } from '../../configs/AppConfig';
 import IntlMessage from '../util-components/IntlMessage';
+import { CiviglioContext } from '../layouts/PubLayout';
 
 /**
  * HeaderNew Component - Top-tier design
@@ -16,11 +17,15 @@ import IntlMessage from '../util-components/IntlMessage';
  * - Correct logo link (/guide/pub/home)
  * - Responsive design
  * - Accessibility support
+ * - User profile dropdown when logged in
  */
 const HeaderNew = () => {
   const router = useRouter();
+  const context = useContext(CiviglioContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState(null);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   // Handle scroll effect for shadow
   useEffect(() => {
@@ -74,6 +79,109 @@ const HeaderNew = () => {
     setMobileMenuOpen(false);
   };
 
+  // Check user auth status
+  useEffect(() => {
+    const checkUser = async () => {
+      if (typeof window === 'undefined') return;
+
+      try {
+        const { Auth } = await import('aws-amplify');
+        const currentUser = await Auth.currentAuthenticatedUser();
+        setUser(currentUser);
+      } catch (err) {
+        setUser(null);
+      }
+    };
+
+    checkUser();
+  }, [context?.authChanged]); // Re-check when auth changes
+
+  // Listen to auth events
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let hubListener;
+    const setupAuthListener = async () => {
+      const { Hub } = await import('aws-amplify');
+      const { Auth } = await import('aws-amplify');
+
+      hubListener = Hub.listen('auth', async (data) => {
+        const { payload } = data;
+
+        if (payload.event === 'signIn') {
+          try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            setUser(currentUser);
+          } catch (err) {
+            setUser(null);
+          }
+        } else if (payload.event === 'signOut') {
+          setUser(null);
+        }
+      });
+    };
+
+    setupAuthListener();
+
+    return () => {
+      if (hubListener) {
+        import('aws-amplify').then(({ Hub }) => {
+          Hub.remove('auth', hubListener);
+        });
+      }
+    };
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleClickOutside = (event) => {
+      if (userDropdownOpen && !event.target.closest('.user-profile-dropdown')) {
+        setUserDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userDropdownOpen]);
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      const { Auth } = await import('aws-amplify');
+      await Auth.signOut();
+      setUser(null);
+      setUserDropdownOpen(false);
+      router.push('/guide/pub/home');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (!user) return '';
+
+    const attributes = user.attributes || {};
+    if (attributes.name) return attributes.name;
+    if (attributes.email) return attributes.email.split('@')[0];
+    if (user.username) return user.username;
+    return 'User';
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    const name = getUserDisplayName();
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
   return (
     <>
       <header className={`civiglio-header ${scrolled ? 'scrolled' : ''}`}>
@@ -103,11 +211,64 @@ const HeaderNew = () => {
                     <IntlMessage id="header.contact" />
                   </a>
                 </li>
-                <li className="nav-item">
-                  <Link href="/app">
-                    <IntlMessage id="login" />
-                  </Link>
-                </li>
+                {user ? (
+                  <li className="nav-item user-profile-dropdown">
+                    <button
+                      className="user-profile-button"
+                      onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                      aria-label="User menu"
+                      aria-expanded={userDropdownOpen}
+                    >
+                      <div className="user-avatar">
+                        {getUserInitials()}
+                      </div>
+                      <span className="user-name">{getUserDisplayName()}</span>
+                      <i className={`fa fa-chevron-down dropdown-icon ${userDropdownOpen ? 'open' : ''}`}></i>
+                    </button>
+
+                    {userDropdownOpen && (
+                      <div className="user-dropdown-menu">
+                        <div className="dropdown-header">
+                          <div className="user-info">
+                            <div className="user-avatar-large">
+                              {getUserInitials()}
+                            </div>
+                            <div className="user-details">
+                              <div className="user-name-full">{getUserDisplayName()}</div>
+                              <div className="user-email">{user.attributes?.email}</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="dropdown-divider"></div>
+                        <ul className="dropdown-list">
+                          <li>
+                            <Link href="/app/home" onClick={() => setUserDropdownOpen(false)}>
+                              <i className="fa fa-home"></i>
+                              <IntlMessage id="header.dashboard" />
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/app/profile" onClick={() => setUserDropdownOpen(false)}>
+                              <i className="fa fa-user"></i>
+                              <IntlMessage id="header.profile" />
+                            </Link>
+                          </li>
+                        </ul>
+                        <div className="dropdown-divider"></div>
+                        <button className="logout-button" onClick={handleLogout}>
+                          <i className="fa fa-sign-out"></i>
+                          <IntlMessage id="logout" />
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                ) : (
+                  <li className="nav-item">
+                    <Link href="/auth/login">
+                      <IntlMessage id="login" />
+                    </Link>
+                  </li>
+                )}
               </ul>
             </nav>
 
@@ -150,6 +311,18 @@ const HeaderNew = () => {
 
           {/* Mobile Navigation */}
           <nav className="mobile-nav">
+            {user && (
+              <div className="mobile-user-info">
+                <div className="mobile-user-avatar">
+                  {getUserInitials()}
+                </div>
+                <div className="mobile-user-details">
+                  <div className="mobile-user-name">{getUserDisplayName()}</div>
+                  <div className="mobile-user-email">{user.attributes?.email}</div>
+                </div>
+              </div>
+            )}
+
             <ul className="mobile-nav-list">
               <li className="mobile-nav-item">
                 <Link href="/guide/pub/home" onClick={closeMobileMenu}>
@@ -168,12 +341,42 @@ const HeaderNew = () => {
                   <IntlMessage id="header.contact" />
                 </a>
               </li>
-              <li className="mobile-nav-item">
-                <Link href="/app" onClick={closeMobileMenu}>
-                  <i className="fa fa-sign-in"></i>
-                  <IntlMessage id="login" />
-                </Link>
-              </li>
+
+              {user ? (
+                <>
+                  <li className="mobile-nav-item">
+                    <Link href="/app/home" onClick={closeMobileMenu}>
+                      <i className="fa fa-dashboard"></i>
+                      <IntlMessage id="header.dashboard" />
+                    </Link>
+                  </li>
+                  <li className="mobile-nav-item">
+                    <Link href="/app/profile" onClick={closeMobileMenu}>
+                      <i className="fa fa-user"></i>
+                      <IntlMessage id="header.profile" />
+                    </Link>
+                  </li>
+                  <li className="mobile-nav-item">
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        closeMobileMenu();
+                      }}
+                      className="mobile-logout-button"
+                    >
+                      <i className="fa fa-sign-out"></i>
+                      <IntlMessage id="logout" />
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <li className="mobile-nav-item">
+                  <Link href="/auth/login" onClick={closeMobileMenu}>
+                    <i className="fa fa-sign-in"></i>
+                    <IntlMessage id="login" />
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
 
@@ -281,6 +484,195 @@ const HeaderNew = () => {
 
         .nav-item a:hover:after {
           width: 100%;
+        }
+
+        /* ========== User Profile Dropdown ========== */
+        .user-profile-dropdown {
+          position: relative;
+        }
+
+        .user-profile-button {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          padding: 8px 12px;
+          border-radius: 8px;
+          transition: all 0.3s ease;
+        }
+
+        .user-profile-button:hover {
+          background: #f7fafc;
+        }
+
+        .user-avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          font-weight: 600;
+          flex-shrink: 0;
+        }
+
+        .user-name {
+          color: #2d3748;
+          font-size: 15px;
+          font-weight: 500;
+          max-width: 150px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .dropdown-icon {
+          color: #667eea;
+          font-size: 12px;
+          transition: transform 0.3s ease;
+        }
+
+        .dropdown-icon.open {
+          transform: rotate(180deg);
+        }
+
+        .user-dropdown-menu {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          width: 280px;
+          background: #ffffff;
+          border-radius: 12px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+          z-index: 1002;
+          animation: slideDown 0.2s ease;
+          overflow: hidden;
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .dropdown-header {
+          padding: 20px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .user-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .user-avatar-large {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.3);
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          font-weight: 700;
+          flex-shrink: 0;
+        }
+
+        .user-details {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .user-name-full {
+          color: #ffffff;
+          font-size: 16px;
+          font-weight: 600;
+          margin-bottom: 4px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .user-email {
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 13px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .dropdown-divider {
+          height: 1px;
+          background: #e2e8f0;
+          margin: 0;
+        }
+
+        .dropdown-list {
+          list-style: none;
+          padding: 8px 0;
+          margin: 0;
+        }
+
+        .dropdown-list li a {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 20px;
+          color: #2d3748;
+          text-decoration: none;
+          font-size: 15px;
+          font-weight: 500;
+          transition: all 0.3s ease;
+        }
+
+        .dropdown-list li a i {
+          color: #667eea;
+          font-size: 16px;
+          width: 20px;
+          text-align: center;
+        }
+
+        .dropdown-list li a:hover {
+          background: #f7fafc;
+          color: #667eea;
+        }
+
+        .logout-button {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 20px;
+          background: transparent;
+          border: none;
+          color: #e53e3e;
+          font-size: 15px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-align: left;
+        }
+
+        .logout-button i {
+          font-size: 16px;
+          width: 20px;
+          text-align: center;
+        }
+
+        .logout-button:hover {
+          background: #fff5f5;
         }
 
         /* ========== Header Actions ========== */
@@ -419,6 +811,52 @@ const HeaderNew = () => {
           padding: 20px 0;
         }
 
+        .mobile-user-info {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          padding: 20px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          margin: -20px 0 20px 0;
+        }
+
+        .mobile-user-avatar {
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.3);
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          font-weight: 700;
+          flex-shrink: 0;
+        }
+
+        .mobile-user-details {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .mobile-user-name {
+          color: #ffffff;
+          font-size: 17px;
+          font-weight: 600;
+          margin-bottom: 4px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .mobile-user-email {
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 14px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
         .mobile-nav-list {
           list-style: none;
           padding: 0;
@@ -451,6 +889,33 @@ const HeaderNew = () => {
         .mobile-nav-item a:hover {
           background: #f7fafc;
           color: #667eea;
+        }
+
+        .mobile-logout-button {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          padding: 15px 20px;
+          background: transparent;
+          border: none;
+          color: #e53e3e;
+          font-size: 16px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-align: left;
+        }
+
+        .mobile-logout-button i {
+          color: #e53e3e;
+          font-size: 18px;
+          width: 24px;
+          text-align: center;
+        }
+
+        .mobile-logout-button:hover {
+          background: #fff5f5;
         }
 
         /* ========== Mobile Language ========== */
