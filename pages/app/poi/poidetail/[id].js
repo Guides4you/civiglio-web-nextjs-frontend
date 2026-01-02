@@ -3,7 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Button, Row, Col, Input, Select, Modal, Alert, InputNumber } from 'antd';
 import { useSelector } from 'react-redux';
-import AuthLayout from '../../../../src/components/layout-components/AuthLayout';
+import AppLayoutSimple from '../../../../src/components/layouts/AppLayoutSimple';
 import POIImage from '../../../../src/components/poi-components/POIImage';
 import POIMap from '../../../../src/components/poi-components/POIMap';
 import IntlMessage from '../../../../src/components/util-components/IntlMessage';
@@ -347,16 +347,16 @@ export default function POIDetailPage() {
 
   if (loading) {
     return (
-      <AuthLayout>
+      <AppLayoutSimple>
         <div style={{ padding: '40px', textAlign: 'center' }}>
           <p>Caricamento...</p>
         </div>
-      </AuthLayout>
+      </AppLayoutSimple>
     );
   }
 
   return (
-    <AuthLayout>
+    <AppLayoutSimple>
       <Head>
         <title>{isCreate ? 'Nuovo POI' : 'Modifica POI'} - Civiglio</title>
       </Head>
@@ -543,6 +543,6 @@ export default function POIDetailPage() {
       >
         <p>{modalData.text}</p>
       </Modal>
-    </AuthLayout>
+    </AppLayoutSimple>
   );
 }

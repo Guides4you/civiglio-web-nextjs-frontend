@@ -12,7 +12,7 @@ import {
   EuroCircleOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons';
-import AuthLayout from '../../../src/components/layout-components/AuthLayout';
+import AppLayoutSimple from '../../../src/components/layouts/AppLayoutSimple';
 import Flex from '../../../src/components/shared-components/Flex';
 import IntlMessage from '../../../src/components/util-components/IntlMessage';
 import { CLOUDFRONT_URL } from '../../../src/constants/ApiConstant';
@@ -293,16 +293,16 @@ export default function PoiListPage() {
 
   if (loading) {
     return (
-      <AuthLayout>
+      <AppLayoutSimple>
         <div style={{ padding: '40px', textAlign: 'center' }}>
           <p>Caricamento...</p>
         </div>
-      </AuthLayout>
+      </AppLayoutSimple>
     );
   }
 
   return (
-    <AuthLayout>
+    <AppLayoutSimple>
       <Head>
         <title>I miei POI - Civiglio</title>
       </Head>
@@ -343,6 +343,6 @@ export default function PoiListPage() {
           ))}
         </Row>
       </div>
-    </AuthLayout>
+    </AppLayoutSimple>
   );
 }

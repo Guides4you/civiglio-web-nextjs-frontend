@@ -1,17 +1,17 @@
 import React from 'react';
 import Head from 'next/head';
-import AppLayout from '../../src/components/layouts/AppLayout';
+import AppLayoutSimple from '../../src/components/layouts/AppLayoutSimple';
 import Dashboard from '../../src/components/app-components/Dashboard';
 
 export default function AppHomePage() {
   return (
-    <AppLayout>
+    <AppLayoutSimple>
       <Head>
         <title>Dashboard - Civiglio</title>
         <meta name="description" content="Area personale - Dashboard" />
       </Head>
 
       <Dashboard />
-    </AppLayout>
+    </AppLayoutSimple>
   );
 }

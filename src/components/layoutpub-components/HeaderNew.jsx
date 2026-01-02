@@ -242,21 +242,81 @@ const HeaderNew = () => {
                         <div className="dropdown-divider"></div>
                         <ul className="dropdown-list">
                           <li>
-                            <Link href="/app/home" onClick={() => setUserDropdownOpen(false)}>
-                              <i className="fa fa-home"></i>
+                            <Link href="/app/home" onClick={() => setUserDropdownOpen(false)} style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '16px',
+                              padding: '12px 16px'
+                            }}>
+                              <i className="fa fa-home" style={{
+                                fontSize: '20px',
+                                width: '32px',
+                                height: '32px',
+                                minWidth: '32px',
+                                minHeight: '32px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                textAlign: 'center',
+                                color: '#667eea',
+                                background: 'rgba(102, 126, 234, 0.08)',
+                                borderRadius: '8px',
+                                transition: 'all 0.3s ease',
+                                flexShrink: 0
+                              }}></i>
                               <IntlMessage id="header.dashboard" />
                             </Link>
                           </li>
                           <li>
-                            <Link href="/app/profile" onClick={() => setUserDropdownOpen(false)}>
-                              <i className="fa fa-user"></i>
+                            <Link href="/app/profile" onClick={() => setUserDropdownOpen(false)} style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '16px',
+                              padding: '12px 16px'
+                            }}>
+                              <i className="fa fa-user" style={{
+                                fontSize: '20px',
+                                width: '32px',
+                                height: '32px',
+                                minWidth: '32px',
+                                minHeight: '32px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                textAlign: 'center',
+                                color: '#667eea',
+                                background: 'rgba(102, 126, 234, 0.08)',
+                                borderRadius: '8px',
+                                transition: 'all 0.3s ease',
+                                flexShrink: 0
+                              }}></i>
                               <IntlMessage id="header.profile" />
                             </Link>
                           </li>
                         </ul>
                         <div className="dropdown-divider"></div>
-                        <button className="logout-button" onClick={handleLogout}>
-                          <i className="fa fa-sign-out"></i>
+                        <button className="logout-button" onClick={handleLogout} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '16px',
+                          padding: '12px 16px'
+                        }}>
+                          <i className="fa fa-sign-out" style={{
+                            fontSize: '20px',
+                            width: '32px',
+                            height: '32px',
+                            minWidth: '32px',
+                            minHeight: '32px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            color: '#e53e3e',
+                            background: 'rgba(229, 62, 62, 0.08)',
+                            borderRadius: '8px',
+                            transition: 'all 0.3s ease',
+                            flexShrink: 0
+                          }}></i>
                           <IntlMessage id="logout" />
                         </button>
                       </div>
@@ -345,14 +405,54 @@ const HeaderNew = () => {
               {user ? (
                 <>
                   <li className="mobile-nav-item">
-                    <Link href="/app/home" onClick={closeMobileMenu}>
-                      <i className="fa fa-dashboard"></i>
+                    <Link href="/app/home" onClick={closeMobileMenu} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '12px 16px'
+                    }}>
+                      <i className="fa fa-dashboard" style={{
+                        fontSize: '20px',
+                        width: '32px',
+                        height: '32px',
+                        minWidth: '32px',
+                        minHeight: '32px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        color: '#667eea',
+                        background: 'rgba(102, 126, 234, 0.08)',
+                        borderRadius: '8px',
+                        transition: 'all 0.3s ease',
+                        flexShrink: 0
+                      }}></i>
                       <IntlMessage id="header.dashboard" />
                     </Link>
                   </li>
                   <li className="mobile-nav-item">
-                    <Link href="/app/profile" onClick={closeMobileMenu}>
-                      <i className="fa fa-user"></i>
+                    <Link href="/app/profile" onClick={closeMobileMenu} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '12px 16px'
+                    }}>
+                      <i className="fa fa-user" style={{
+                        fontSize: '20px',
+                        width: '32px',
+                        height: '32px',
+                        minWidth: '32px',
+                        minHeight: '32px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        color: '#667eea',
+                        background: 'rgba(102, 126, 234, 0.08)',
+                        borderRadius: '8px',
+                        transition: 'all 0.3s ease',
+                        flexShrink: 0
+                      }}></i>
                       <IntlMessage id="header.profile" />
                     </Link>
                   </li>
@@ -363,16 +463,57 @@ const HeaderNew = () => {
                         closeMobileMenu();
                       }}
                       className="mobile-logout-button"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                        padding: '12px 16px'
+                      }}
                     >
-                      <i className="fa fa-sign-out"></i>
+                      <i className="fa fa-sign-out" style={{
+                        fontSize: '20px',
+                        width: '32px',
+                        height: '32px',
+                        minWidth: '32px',
+                        minHeight: '32px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        color: '#e53e3e',
+                        background: 'rgba(229, 62, 62, 0.08)',
+                        borderRadius: '8px',
+                        transition: 'all 0.3s ease',
+                        flexShrink: 0
+                      }}></i>
                       <IntlMessage id="logout" />
                     </button>
                   </li>
                 </>
               ) : (
                 <li className="mobile-nav-item">
-                  <Link href="/auth/login" onClick={closeMobileMenu}>
-                    <i className="fa fa-sign-in"></i>
+                  <Link href="/auth/login" onClick={closeMobileMenu} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    padding: '12px 16px'
+                  }}>
+                    <i className="fa fa-sign-in" style={{
+                      fontSize: '20px',
+                      width: '32px',
+                      height: '32px',
+                      minWidth: '32px',
+                      minHeight: '32px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      color: '#667eea',
+                      background: 'rgba(102, 126, 234, 0.08)',
+                      borderRadius: '8px',
+                      transition: 'all 0.3s ease',
+                      flexShrink: 0
+                    }}></i>
                     <IntlMessage id="login" />
                   </Link>
                 </li>
@@ -628,8 +769,8 @@ const HeaderNew = () => {
         .dropdown-list li a {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 12px 20px;
+          gap: 16px;
+          padding: 14px 24px;
           color: #2d3748;
           text-decoration: none;
           font-size: 15px;
@@ -639,9 +780,16 @@ const HeaderNew = () => {
 
         .dropdown-list li a i {
           color: #667eea;
-          font-size: 16px;
-          width: 20px;
+          font-size: 20px;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           text-align: center;
+          background: rgba(102, 126, 234, 0.08);
+          border-radius: 8px;
+          transition: all 0.3s ease;
         }
 
         .dropdown-list li a:hover {
@@ -649,12 +797,17 @@ const HeaderNew = () => {
           color: #667eea;
         }
 
+        .dropdown-list li a:hover i {
+          background: rgba(102, 126, 234, 0.15);
+          transform: scale(1.05);
+        }
+
         .logout-button {
           width: 100%;
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 12px 20px;
+          gap: 16px;
+          padding: 14px 24px;
           background: transparent;
           border: none;
           color: #e53e3e;
@@ -666,13 +819,25 @@ const HeaderNew = () => {
         }
 
         .logout-button i {
-          font-size: 16px;
-          width: 20px;
+          font-size: 20px;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           text-align: center;
+          background: rgba(229, 62, 62, 0.08);
+          border-radius: 8px;
+          transition: all 0.3s ease;
         }
 
         .logout-button:hover {
           background: #fff5f5;
+        }
+
+        .logout-button:hover i {
+          background: rgba(229, 62, 62, 0.15);
+          transform: scale(1.05);
         }
 
         /* ========== Header Actions ========== */
