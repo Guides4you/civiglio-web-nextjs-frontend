@@ -16,6 +16,14 @@ const AudioPlayerPublic = dynamic(
   }
 );
 
+const AppDownloadBanner = dynamic(
+  () => import('../util-components/AppDownloadBanner'),
+  {
+    ssr: false,
+    loading: () => null
+  }
+);
+
 export const CiviglioContext = React.createContext();
 export const CiviglioConsumer = CiviglioContext.Consumer;
 const CiviglioProvider = CiviglioContext.Provider;
@@ -217,6 +225,8 @@ export const PubLayout = ({ children, locale }) => {
       </div>
       {/* Footer migrato e SSR-safe */}
       {isMobile === false && <Footer />}
+      {/* App Download Banner - shown only on mobile devices */}
+      {isMobile === false && <AppDownloadBanner />}
     </div>
   );
 };
