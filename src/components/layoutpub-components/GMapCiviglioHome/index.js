@@ -58,7 +58,8 @@ const Marker = ({ lat, lng, poi, onClick, isNew, isUser, isOpen, onToggleInfo })
         position: 'absolute',
         transform: 'translate(-50%, -100%)',
         cursor: 'pointer',
-        animation: animate ? 'markerBounce 0.6s ease-out' : 'none'
+        animation: animate ? 'markerBounce 0.6s ease-out' : 'none',
+        zIndex: isOpen ? 9998 : 1
       }}
     >
       <img
@@ -83,7 +84,7 @@ const Marker = ({ lat, lng, poi, onClick, isNew, isUser, isOpen, onToggleInfo })
             borderRadius: '8px',
             boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
             minWidth: '200px',
-            zIndex: 1000,
+            zIndex: 9999,
             whiteSpace: 'normal'
           }}
         >
@@ -308,6 +309,14 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
       console.log('📊 Number of POIs found:', response.data?.length || 0);
 
       if (response.data && response.data.length > 0) {
+        // Filter only public POIs (supports both BOOL and string formats)
+        const publicPOIs = response.data.filter(poi => {
+          const isPublic = (poi.public?.BOOL === true) || (poi.public?.S === "true");
+          return isPublic;
+        });
+
+        console.log('📊 Public POIs found:', publicPOIs.length);
+
         // Import dinamico di Amplify
         const { API } = await import('aws-amplify');
         const { GRAPHQL_AUTH_MODE } = await import('@aws-amplify/api');
@@ -330,9 +339,9 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
         `;
 
         const poisDetails = await Promise.all(
-          response.data.map(async (geoPoiData, index) => {
+          publicPOIs.map(async (geoPoiData, index) => {
             try {
-              console.log(`\n🔄 Processing POI ${index + 1}/${response.data.length}`);
+              console.log(`\n🔄 Processing POI ${index + 1}/${publicPOIs.length}`);
               console.log('📍 GeoPoiData:', geoPoiData);
 
               const variables = {

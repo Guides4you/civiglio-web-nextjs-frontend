@@ -58,14 +58,9 @@ const AppLayoutSimple = ({ children }) => {
       label: 'app.menu.dashboard',
     },
     {
-      path: '/app/audio',
-      icon: 'fa-music',
-      label: 'app.menu.myaudio',
-    },
-    {
-      path: '/app/poi',
-      icon: 'fa-map-marker',
-      label: 'app.menu.mypoi',
+      path: '/app/content',
+      icon: 'fa-folder-open',
+      label: 'app.menu.mycontent',
     },
     {
       path: '/app/profile',

@@ -160,6 +160,18 @@ const GridItem = ({ data }) => {
 
 export default function PoiListPage() {
   const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to unified content page
+    router.replace('/app/content');
+  }, [router]);
+
+  return null;
+}
+
+// Old implementation below - kept for reference
+function OldPoiListPage() {
+  const router = useRouter();
   const locale = useSelector((state) => state.theme.locale);
   const [list, setList] = useState({ channel: { title: '', poiobjects: [] } });
   const [editChannel, setEditChannel] = useState(false);

@@ -1,17 +1,13 @@
-import React from 'react';
-import Head from 'next/head';
-import AppLayoutSimple from '../../../src/components/layouts/AppLayoutSimple';
-import MyAudio from '../../../src/components/app-components/MyAudio';
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 
 export default function MyAudioPage() {
-  return (
-    <AppLayoutSimple>
-      <Head>
-        <title>I Miei Audio - Civiglio</title>
-        <meta name="description" content="Area personale - I miei contenuti audio" />
-      </Head>
+  const router = useRouter();
 
-      <MyAudio />
-    </AppLayoutSimple>
-  );
+  useEffect(() => {
+    // Redirect to unified content page
+    router.replace('/app/content');
+  }, [router]);
+
+  return null;
 }
