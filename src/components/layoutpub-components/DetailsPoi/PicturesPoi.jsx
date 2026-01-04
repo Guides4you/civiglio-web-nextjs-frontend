@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Image } from "antd";
+import { Image, message, Modal } from "antd";
 import { CLOUDFRONT_URL } from "../../../constants/ApiConstant";
 import useEmblaCarousel from "embla-carousel-react";
 import { Thumb } from "./Thumb";
@@ -11,6 +11,8 @@ import Breadcrumbs from "./Breadcrumbs";
 const PicturesPoi = ({ poi, mapRef }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [address, setAddress] = useState("");
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const { locale } = useSelector((state) => state.theme);
   const [emblaMainRef, emblaMainApi] = useEmblaCarousel({ loop: true });
   const [emblaThumbsRef, emblaThumbsApi] = useEmblaCarousel({
@@ -73,6 +75,88 @@ const PicturesPoi = ({ poi, mapRef }) => {
     emblaMainApi.on("select", onSelect);
     emblaMainApi.on("reInit", onSelect);
   }, [emblaMainApi, onSelect]);
+
+  // Share functionality
+  const handleShare = async () => {
+    // Prevent multiple simultaneous share calls
+    if (isSharing) return;
+
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareTitle = poi.titolo;
+    const shareText = `Scopri ${poi.titolo} su Civiglio`;
+
+    // Detect if mobile device (prefer Web Share API on mobile only)
+    const isMobile = typeof window !== 'undefined' && (
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && window.innerWidth < 768)
+    );
+
+    // Use Web Share API only on mobile devices
+    if (isMobile && typeof navigator !== 'undefined' && navigator.share) {
+      setIsSharing(true);
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or error - ignore
+        if (err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
+      } finally {
+        setIsSharing(false);
+      }
+    } else {
+      // Desktop or fallback: Show modal with social options
+      setShareModalVisible(true);
+    }
+  };
+
+  const copyToClipboard = async () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      message.success('Link copiato negli appunti!');
+      setShareModalVisible(false);
+    } catch (err) {
+      message.error('Errore nella copia del link');
+    }
+  };
+
+  const shareOnSocial = (platform) => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareTitle = encodeURIComponent(poi.titolo);
+    const shareText = encodeURIComponent(`Scopri ${poi.titolo} su Civiglio`);
+
+    let url = '';
+
+    switch (platform) {
+      case 'whatsapp':
+        url = `https://wa.me/?text=${shareText}%20${encodeURIComponent(shareUrl)}`;
+        break;
+      case 'facebook':
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+        break;
+      case 'twitter':
+        url = `https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(shareUrl)}`;
+        break;
+      case 'linkedin':
+        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+        break;
+      case 'email':
+        url = `mailto:?subject=${shareTitle}&body=${shareText}%20${encodeURIComponent(shareUrl)}`;
+        break;
+      default:
+        return;
+    }
+
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setShareModalVisible(false);
+    }
+  };
 
   const images = [
     poi.immagine,
@@ -147,7 +231,7 @@ const PicturesPoi = ({ poi, mapRef }) => {
             </div>
 
             <div className="hero-actions">
-              <button className="action-btn" title="Condividi">
+              <button className="action-btn" title="Condividi" onClick={handleShare}>
                 <i className="fa fa-share-alt"></i>
                 <span>Condividi</span>
               </button>
@@ -189,6 +273,158 @@ const PicturesPoi = ({ poi, mapRef }) => {
           </div>
         </div>
       </section>
+
+      {/* Share Modal */}
+      <Modal
+        open={shareModalVisible}
+        onCancel={() => setShareModalVisible(false)}
+        footer={null}
+        centered
+        width={480}
+        className="share-modal"
+      >
+        <div className="share-modal-content">
+          <h3 className="share-title">Condividi</h3>
+          <p className="share-subtitle">{poi.titolo}</p>
+
+          <div className="social-buttons">
+            <button className="social-btn whatsapp" onClick={() => shareOnSocial('whatsapp')}>
+              <i className="fa fa-whatsapp"></i>
+              <span>WhatsApp</span>
+            </button>
+
+            <button className="social-btn facebook" onClick={() => shareOnSocial('facebook')}>
+              <i className="fa fa-facebook"></i>
+              <span>Facebook</span>
+            </button>
+
+            <button className="social-btn twitter" onClick={() => shareOnSocial('twitter')}>
+              <i className="fa fa-twitter"></i>
+              <span>Twitter</span>
+            </button>
+
+            <button className="social-btn linkedin" onClick={() => shareOnSocial('linkedin')}>
+              <i className="fa fa-linkedin"></i>
+              <span>LinkedIn</span>
+            </button>
+
+            <button className="social-btn email" onClick={() => shareOnSocial('email')}>
+              <i className="fa fa-envelope"></i>
+              <span>Email</span>
+            </button>
+
+            <button className="social-btn copy" onClick={copyToClipboard}>
+              <i className="fa fa-link"></i>
+              <span>Copia Link</span>
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <style jsx global>{`
+        .share-modal .ant-modal-content {
+          border-radius: 16px;
+          overflow: hidden;
+        }
+
+        .share-modal .ant-modal-body {
+          padding: 32px;
+        }
+
+        .share-modal-content {
+          text-align: center;
+        }
+
+        .share-title {
+          font-size: 24px;
+          font-weight: 700;
+          color: #2d3748;
+          margin: 0 0 8px 0;
+        }
+
+        .share-subtitle {
+          font-size: 14px;
+          color: #6c757d;
+          margin: 0 0 24px 0;
+        }
+
+        .social-buttons {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+        }
+
+        .social-btn {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          padding: 16px 12px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          background: #ffffff;
+          color: #2d3748;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .social-btn:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .social-btn i {
+          font-size: 28px;
+        }
+
+        .social-btn.whatsapp:hover {
+          background: #25D366;
+          border-color: #25D366;
+          color: #ffffff;
+        }
+
+        .social-btn.facebook:hover {
+          background: #1877F2;
+          border-color: #1877F2;
+          color: #ffffff;
+        }
+
+        .social-btn.twitter:hover {
+          background: #1DA1F2;
+          border-color: #1DA1F2;
+          color: #ffffff;
+        }
+
+        .social-btn.linkedin:hover {
+          background: #0A66C2;
+          border-color: #0A66C2;
+          color: #ffffff;
+        }
+
+        .social-btn.email:hover {
+          background: #EA4335;
+          border-color: #EA4335;
+          color: #ffffff;
+        }
+
+        .social-btn.copy:hover {
+          background: #667eea;
+          border-color: #667eea;
+          color: #ffffff;
+        }
+
+        @media (max-width: 480px) {
+          .social-buttons {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .share-modal .ant-modal-body {
+            padding: 24px 16px;
+          }
+        }
+      `}</style>
 
       <style jsx>{`
         .hero-section {

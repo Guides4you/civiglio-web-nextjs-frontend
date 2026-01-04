@@ -28,19 +28,34 @@ const MyAudio = () => {
     setLoading(true);
     try {
       const { Auth } = await import('aws-amplify');
-      const currentUser = await Auth.currentAuthenticatedUser();
+      const userInfo = await Auth.currentUserInfo();
 
-      const response = await API.graphql(
-        graphqlOperation(listMediaByProprietario, {
-          filter: {
-            proprietario_uuid: currentUser.attributes.sub,
-          },
-          limit: 100,
-        })
-      );
+      // Fetch user's media for all languages
+      const allItems = [];
+      const languages = ['it', 'en', 'fr'];
 
-      const items = response.data.listMediaByProprietario.items || [];
-      setAudioList(items);
+      for (const lang of languages) {
+        try {
+          const parameters = {
+            filter: {
+              lingua: lang,
+              proprietario: userInfo.username,
+            },
+          };
+
+          const response = await API.graphql(
+            graphqlOperation(listMediaByProprietario, parameters)
+          );
+
+          const langItems = response.data.listMediaByProprietario.items || [];
+          allItems.push(...langItems);
+        } catch (err) {
+          console.warn(`Error loading ${lang} audio:`, err.message);
+          // Continue with next language
+        }
+      }
+
+      setAudioList(allItems);
     } catch (error) {
       console.error('Error fetching audio list:', error);
       messageApi.error('Errore nel caricamento degli audio');
@@ -112,7 +127,9 @@ const MyAudio = () => {
   };
 
   const handleEdit = (item) => {
-    router.push(`/app/poi/poidetail/${item.PK}`);
+    // Format: PK__SK (without leading underscore from SK)
+    const skPart = item.SK.startsWith('_') ? item.SK.substring(1) : item.SK;
+    router.push(`/app/poi/poidetail/${item.PK}__${skPart}`);
   };
 
   const handleDelete = (item) => {
