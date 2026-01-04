@@ -42,7 +42,39 @@ const Profile = () => {
       try {
         setSaving(true);
         const { API, graphqlOperation } = await import('aws-amplify');
-        const input = { ...values };
+
+        // Only send fields that are defined in ProfileInfoInput schema
+        // Build input object and omit fields that are empty or null
+        const buildInput = () => {
+          const input = {
+            PK: values.PK,
+            email: values.email, // Required field in schema
+            publicProfile: Boolean(values.publicProfile)
+          };
+
+          // Only add fields that have values
+          if (values.name) input.name = values.name;
+          if (values.surname) input.surname = values.surname;
+          if (values.channelTitle) input.channelTitle = values.channelTitle;
+          if (values.channelDescription) input.channelDescription = values.channelDescription;
+          if (values.billingCompany) input.billingCompany = values.billingCompany;
+          if (values.billingCountry) input.billingCountry = values.billingCountry;
+          if (values.billingZipCode) input.billingZipCode = values.billingZipCode;
+          if (values.billingStreet) input.billingStreet = values.billingStreet;
+          if (values.billingVatFiscalCode) input.billingVatFiscalCode = values.billingVatFiscalCode;
+          if (values.paymentMethod) input.paymentMethod = values.paymentMethod;
+          if (values.paymentData) input.paymentData = values.paymentData;
+
+          // For update, include immagine if present
+          if (!newProfile && values.immagine) {
+            input.immagine = values.immagine;
+          }
+
+          return input;
+        };
+
+        const input = buildInput();
+        console.log('Saving profile with input:', JSON.stringify(input, null, 2));
 
         if (newProfile) {
           await API.graphql(graphqlOperation(createProfileInfo, { input }));
@@ -54,6 +86,7 @@ const Profile = () => {
         }
       } catch (error) {
         console.error('Profile save error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         message.error('Si è verificato un errore nel salvataggio del profilo.');
       } finally {
         setSaving(false);

@@ -268,6 +268,32 @@ const HeaderNew = () => {
                             </Link>
                           </li>
                           <li>
+                            <Link href="/app/content" onClick={() => setUserDropdownOpen(false)} style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '16px',
+                              padding: '12px 16px'
+                            }}>
+                              <i className="fa fa-folder-open" style={{
+                                fontSize: '20px',
+                                width: '32px',
+                                height: '32px',
+                                minWidth: '32px',
+                                minHeight: '32px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                textAlign: 'center',
+                                color: '#667eea',
+                                background: 'rgba(102, 126, 234, 0.08)',
+                                borderRadius: '8px',
+                                transition: 'all 0.3s ease',
+                                flexShrink: 0
+                              }}></i>
+                              <IntlMessage id="app.menu.mycontent" />
+                            </Link>
+                          </li>
+                          <li>
                             <Link href="/app/profile" onClick={() => setUserDropdownOpen(false)} style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -385,8 +411,28 @@ const HeaderNew = () => {
 
             <ul className="mobile-nav-list">
               <li className="mobile-nav-item">
-                <Link href="/guide/pub/home" onClick={closeMobileMenu}>
-                  <i className="fa fa-home"></i>
+                <Link href="/guide/pub/home" onClick={closeMobileMenu} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  padding: '12px 16px'
+                }}>
+                  <i className="fa fa-home" style={{
+                    fontSize: '20px',
+                    width: '32px',
+                    height: '32px',
+                    minWidth: '32px',
+                    minHeight: '32px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    color: '#667eea',
+                    background: 'rgba(102, 126, 234, 0.08)',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    flexShrink: 0
+                  }}></i>
                   <IntlMessage id="home" />
                 </Link>
               </li>
@@ -396,8 +442,29 @@ const HeaderNew = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={closeMobileMenu}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    padding: '12px 16px'
+                  }}
                 >
-                  <i className="fa fa-envelope"></i>
+                  <i className="fa fa-envelope" style={{
+                    fontSize: '20px',
+                    width: '32px',
+                    height: '32px',
+                    minWidth: '32px',
+                    minHeight: '32px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    color: '#667eea',
+                    background: 'rgba(102, 126, 234, 0.08)',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    flexShrink: 0
+                  }}></i>
                   <IntlMessage id="header.contact" />
                 </a>
               </li>
@@ -428,6 +495,32 @@ const HeaderNew = () => {
                         flexShrink: 0
                       }}></i>
                       <IntlMessage id="header.dashboard" />
+                    </Link>
+                  </li>
+                  <li className="mobile-nav-item">
+                    <Link href="/app/content" onClick={closeMobileMenu} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '12px 16px'
+                    }}>
+                      <i className="fa fa-folder-open" style={{
+                        fontSize: '20px',
+                        width: '32px',
+                        height: '32px',
+                        minWidth: '32px',
+                        minHeight: '32px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        color: '#667eea',
+                        background: 'rgba(102, 126, 234, 0.08)',
+                        borderRadius: '8px',
+                        transition: 'all 0.3s ease',
+                        flexShrink: 0
+                      }}></i>
+                      <IntlMessage id="app.menu.mycontent" />
                     </Link>
                   </li>
                   <li className="mobile-nav-item">

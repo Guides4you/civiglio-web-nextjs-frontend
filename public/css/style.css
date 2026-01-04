@@ -110,7 +110,7 @@ select {
 	outline: none;
 	font-size: 15px;
 	color: #808080;
-	margin: 0 0 16px 0;
+	margin: 0 0 1px 0;
 	max-width: 100%;
 	width: 100%;
 	box-sizing: border-box;

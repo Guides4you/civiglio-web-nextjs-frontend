@@ -13,6 +13,7 @@ const AudiosPoi = ({ poi }) => {
   const [audioPlayed, setAudioPlayed] = useState(false);
   const [currentAudio, setCurrentAudio] = useState();
   const [poiAudios, setPoiAudios] = useState(poi.audioMediaItems);
+  const [loadingLike, setLoadingLike] = useState(null); // Track which audio is being liked/disliked
   const { locale } = useSelector((state) => state.theme);
   const context = useContext(CiviglioContext);
   const router = useRouter();
@@ -79,6 +80,26 @@ const AudiosPoi = ({ poi }) => {
     if (!auth.current) {
       context.showLogin();
     } else {
+      // Usa 'id' come SK se SK non è presente
+      const sk = audio.SK || audio.id;
+
+      if (!sk) {
+        console.error('SK or id is missing from audio object:', audio);
+        const { message } = await import('antd');
+        message.error('Errore: ID audio mancante');
+        return;
+      }
+
+      setLoadingLike(sk); // Show loading state
+
+      // Optimistic update
+      setPoiAudios(prev => ({
+        ...prev,
+        items: prev.items.map(item =>
+          (item.SK || item.id) === sk ? { ...item, liked: true } : item
+        )
+      }));
+
       try {
         const { API, graphqlOperation } = await import('aws-amplify');
         const { addLikeMedia } = await import('../../../graphql/publicMutations');
@@ -88,7 +109,7 @@ const AudiosPoi = ({ poi }) => {
         await API.graphql(
           graphqlOperation(addLikeMedia, {
             PK: audio.PK,
-            SK: audio.SK,
+            SK: sk,
             user: auth.current.attributes.sub,
           })
         );
@@ -97,6 +118,22 @@ const AudiosPoi = ({ poi }) => {
         await reloadAudioItems();
       } catch (e) {
         console.error('Error adding like:', e);
+
+        // If ConditionalCheckFailedException, the user already liked this
+        // Reload to get the correct state
+        if (e.errors && e.errors[0]?.errorType === 'DynamoDB:ConditionalCheckFailedException') {
+          console.log('Like already exists, reloading current state...');
+          await reloadAudioItems();
+        } else {
+          // Rollback optimistic update on error
+          await reloadAudioItems();
+
+          // Show error message for other errors
+          const { message } = await import('antd');
+          message.error('Errore durante l\'aggiunta del like. Riprova.');
+        }
+      } finally {
+        setLoadingLike(null);
       }
     }
   };
@@ -106,6 +143,26 @@ const AudiosPoi = ({ poi }) => {
     if (!auth.current) {
       context.showLogin();
     } else {
+      // Usa 'id' come SK se SK non è presente
+      const sk = audio.SK || audio.id;
+
+      if (!sk) {
+        console.error('SK or id is missing from audio object:', audio);
+        const { message } = await import('antd');
+        message.error('Errore: ID audio mancante');
+        return;
+      }
+
+      setLoadingLike(sk); // Show loading state
+
+      // Optimistic update
+      setPoiAudios(prev => ({
+        ...prev,
+        items: prev.items.map(item =>
+          (item.SK || item.id) === sk ? { ...item, liked: false } : item
+        )
+      }));
+
       try {
         const { API, graphqlOperation } = await import('aws-amplify');
         const { removeLikeMedia } = await import('../../../graphql/publicMutations');
@@ -115,7 +172,7 @@ const AudiosPoi = ({ poi }) => {
         await API.graphql(
           graphqlOperation(removeLikeMedia, {
             PK: audio.PK,
-            SK: audio.SK,
+            SK: sk,
             user: auth.current.attributes.sub,
           })
         );
@@ -124,6 +181,17 @@ const AudiosPoi = ({ poi }) => {
         await reloadAudioItems();
       } catch (e) {
         console.error('Error removing like:', e);
+
+        // Reload to get the correct state
+        await reloadAudioItems();
+
+        // Show error message only for unexpected errors
+        if (!e.errors || e.errors[0]?.errorType !== 'DynamoDB:ConditionalCheckFailedException') {
+          const { message } = await import('antd');
+          message.error('Errore durante la rimozione del like. Riprova.');
+        }
+      } finally {
+        setLoadingLike(null);
       }
     }
   };
@@ -272,10 +340,11 @@ const AudiosPoi = ({ poi }) => {
 
                 <div className="card-actions-top">
                   <button
-                    className={`like-button ${a.liked ? 'liked' : ''}`}
+                    className={`like-button ${a.liked ? 'liked' : ''} ${loadingLike === (a.SK || a.id) ? 'loading' : ''}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      if (loadingLike) return; // Prevent multiple clicks
                       if (a.liked) {
                         handleDislike(a);
                       } else {
@@ -283,8 +352,13 @@ const AudiosPoi = ({ poi }) => {
                       }
                     }}
                     title={a.liked ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+                    disabled={loadingLike === (a.SK || a.id)}
                   >
-                    <i className={`fa ${a.liked ? 'fa-heart' : 'fa-heart-o'}`}></i>
+                    {loadingLike === (a.SK || a.id) ? (
+                      <i className="fa fa-spinner fa-spin"></i>
+                    ) : (
+                      <i className={`fa ${a.liked ? 'fa-heart' : 'fa-heart-o'}`}></i>
+                    )}
                   </button>
                 </div>
               </div>
@@ -521,6 +595,19 @@ const AudiosPoi = ({ poi }) => {
 
         .like-button.liked i {
           color: #ffffff;
+        }
+
+        .like-button.loading {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        .like-button.loading:hover {
+          transform: none;
+        }
+
+        .like-button:disabled {
+          cursor: not-allowed;
         }
 
         .like-button:active {
