@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import AuthLayout from '../../../src/components/layout-components/AuthLayout';
+import AppLayoutSimple from '../../../src/components/layouts/AppLayoutSimple';
 import Loading from '../../../src/components/util-components/Loading';
 
 export default function ProfileIndex() {
@@ -11,8 +11,8 @@ export default function ProfileIndex() {
   }, [router]);
 
   return (
-    <AuthLayout>
+    <AppLayoutSimple>
       <Loading align="center" cover="page" />
-    </AuthLayout>
+    </AppLayoutSimple>
   );
 }

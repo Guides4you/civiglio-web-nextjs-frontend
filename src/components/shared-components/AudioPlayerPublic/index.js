@@ -80,12 +80,7 @@ const AudioPlayerPublic = ({ locale, onAudioEnded, onPauseAudio, onPlayAudio, sh
     audioRef.current.src = audioUrl;
     audioRef.current.load();
 
-    if (isPlaying) {
-      audioRef.current.play().catch(err => {
-        console.error('Error playing audio:', err);
-        setIsPlaying(false);
-      });
-    }
+    // Don't call play() here - let handleLoadedMetadata do it when audio is ready
   }, [currentAudio]);
 
   const handleTimeUpdate = () => {
@@ -97,6 +92,14 @@ const AudioPlayerPublic = ({ locale, onAudioEnded, onPauseAudio, onPlayAudio, sh
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
+
+      // Auto-play when metadata is loaded and isPlaying is true
+      if (isPlaying) {
+        audioRef.current.play().catch(err => {
+          console.error('Error playing audio on metadata loaded:', err);
+          setIsPlaying(false);
+        });
+      }
     }
   };
 

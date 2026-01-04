@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
@@ -10,6 +10,14 @@ import Footer from '../layoutpub-components/Footer';
 // Dynamic import per componenti che richiedono browser APIs con forwardRef support
 const AudioPlayerPublic = dynamic(
   () => import('../shared-components/AudioPlayerPublic'),
+  {
+    ssr: false,
+    loading: () => null
+  }
+);
+
+const AppDownloadBanner = dynamic(
+  () => import('../util-components/AppDownloadBanner'),
   {
     ssr: false,
     loading: () => null
@@ -34,6 +42,7 @@ export const PubLayout = ({ children, locale }) => {
 
   const mounted = useRef(false);
   const user = useRef(undefined);
+  const [authChanged, setAuthChanged] = useState(0); // Trigger re-render on auth change
 
   const handlePlayerReady = (playerMethods) => {
     audioPlayerInstance.current = playerMethods;
@@ -46,7 +55,56 @@ export const PubLayout = ({ children, locale }) => {
 
   useEffect(() => {
     mounted.current = true;
-    return () => (mounted.current = false);
+
+    // Setup Auth listener
+    let hubListener;
+    const setupAuthListener = async () => {
+      if (typeof window === 'undefined') return;
+
+      const { Hub } = await import('aws-amplify');
+      const { Auth } = await import('aws-amplify');
+
+      // Check current auth state
+      try {
+        const currentUser = await Auth.currentAuthenticatedUser();
+        user.current = currentUser;
+        setAuthChanged(prev => prev + 1);
+      } catch (err) {
+        user.current = undefined;
+      }
+
+      // Listen to auth events
+      hubListener = Hub.listen('auth', async (data) => {
+        const { payload } = data;
+        console.log('PubLayout: Auth event received:', payload.event);
+
+        if (payload.event === 'signIn') {
+          try {
+            const currentUser = await Auth.currentAuthenticatedUser();
+            user.current = currentUser;
+            setAuthChanged(prev => prev + 1);
+            console.log('PubLayout: User signed in:', currentUser.username);
+          } catch (err) {
+            console.error('Error getting current user:', err);
+          }
+        } else if (payload.event === 'signOut') {
+          user.current = undefined;
+          setAuthChanged(prev => prev + 1);
+          console.log('PubLayout: User signed out');
+        }
+      });
+    };
+
+    setupAuthListener();
+
+    return () => {
+      mounted.current = false;
+      if (hubListener) {
+        import('aws-amplify').then(({ Hub }) => {
+          Hub.remove('auth', hubListener);
+        });
+      }
+    };
   }, []);
 
   const handleAuthStateChange = async (nextAuthState, authData) => {
@@ -149,6 +207,7 @@ export const PubLayout = ({ children, locale }) => {
               setAudioPlayFn: setAudioPlayFn,
               showLogin: showLoginFn,
               getUser: getUserFn,
+              authChanged: authChanged, // Added to trigger re-renders on auth change
             }}
           >
             {children}
@@ -166,6 +225,8 @@ export const PubLayout = ({ children, locale }) => {
       </div>
       {/* Footer migrato e SSR-safe */}
       {isMobile === false && <Footer />}
+      {/* App Download Banner - shown only on mobile devices */}
+      {isMobile === false && <AppDownloadBanner />}
     </div>
   );
 };

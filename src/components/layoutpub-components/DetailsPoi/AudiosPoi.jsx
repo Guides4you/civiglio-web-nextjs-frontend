@@ -6,12 +6,14 @@ import { FolderViewOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import IntlMessage from "../../util-components/IntlMessage";
 import ExpandableParagraph from "./ExpandableParagraph";
+import NewContent from "./NewContent";
 import { useRouter } from 'next/router';
 
 const AudiosPoi = ({ poi }) => {
   const [audioPlayed, setAudioPlayed] = useState(false);
   const [currentAudio, setCurrentAudio] = useState();
   const [poiAudios, setPoiAudios] = useState(poi.audioMediaItems);
+  const [loadingLike, setLoadingLike] = useState(null); // Track which audio is being liked/disliked
   const { locale } = useSelector((state) => state.theme);
   const context = useContext(CiviglioContext);
   const router = useRouter();
@@ -26,18 +28,19 @@ const AudiosPoi = ({ poi }) => {
   const reloadAudioItems = async () => {
     try {
       const { API, graphqlOperation } = await import('aws-amplify');
-      const { GRAPHQL_AUTH_MODE } = await import('@aws-amplify/api-graphql');
       const { getGeoPoi } = await import('../../../graphql/publicQueries');
 
-      const result = await API.graphql({
-        query: getGeoPoi,
-        authMode: GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POOLS,
-        variables: { rangeKey: poi.PK, SK: poi.SK },
-      });
+      const result = await API.graphql(
+        graphqlOperation(getGeoPoi, { rangeKey: poi.PK, SK: poi.SK })
+      );
+
+      console.log('Audio items reloaded with auth, liked status:',
+        result.data.getGeoPoi.audioMediaItems.items.map(a => ({ title: a.audioTitle, liked: a.liked }))
+      );
 
       setPoiAudios(result.data.getGeoPoi.audioMediaItems);
     } catch (e) {
-      console.log(e);
+      console.error('Error reloading audio items:', e);
     }
   };
 
@@ -77,21 +80,60 @@ const AudiosPoi = ({ poi }) => {
     if (!auth.current) {
       context.showLogin();
     } else {
+      // Usa 'id' come SK se SK non è presente
+      const sk = audio.SK || audio.id;
+
+      if (!sk) {
+        console.error('SK or id is missing from audio object:', audio);
+        const { message } = await import('antd');
+        message.error('Errore: ID audio mancante');
+        return;
+      }
+
+      setLoadingLike(sk); // Show loading state
+
+      // Optimistic update
+      setPoiAudios(prev => ({
+        ...prev,
+        items: prev.items.map(item =>
+          (item.SK || item.id) === sk ? { ...item, liked: true } : item
+        )
+      }));
+
       try {
         const { API, graphqlOperation } = await import('aws-amplify');
         const { addLikeMedia } = await import('../../../graphql/publicMutations');
 
+        console.log('Adding like to audio:', audio.audioTitle);
+
         await API.graphql(
           graphqlOperation(addLikeMedia, {
             PK: audio.PK,
-            SK: audio.SK,
+            SK: sk,
             user: auth.current.attributes.sub,
           })
         );
 
-        reloadAudioItems();
+        console.log('Like added successfully, reloading...');
+        await reloadAudioItems();
       } catch (e) {
-        console.log(e);
+        console.error('Error adding like:', e);
+
+        // If ConditionalCheckFailedException, the user already liked this
+        // Reload to get the correct state
+        if (e.errors && e.errors[0]?.errorType === 'DynamoDB:ConditionalCheckFailedException') {
+          console.log('Like already exists, reloading current state...');
+          await reloadAudioItems();
+        } else {
+          // Rollback optimistic update on error
+          await reloadAudioItems();
+
+          // Show error message for other errors
+          const { message } = await import('antd');
+          message.error('Errore durante l\'aggiunta del like. Riprova.');
+        }
+      } finally {
+        setLoadingLike(null);
       }
     }
   };
@@ -101,37 +143,113 @@ const AudiosPoi = ({ poi }) => {
     if (!auth.current) {
       context.showLogin();
     } else {
+      // Usa 'id' come SK se SK non è presente
+      const sk = audio.SK || audio.id;
+
+      if (!sk) {
+        console.error('SK or id is missing from audio object:', audio);
+        const { message } = await import('antd');
+        message.error('Errore: ID audio mancante');
+        return;
+      }
+
+      setLoadingLike(sk); // Show loading state
+
+      // Optimistic update
+      setPoiAudios(prev => ({
+        ...prev,
+        items: prev.items.map(item =>
+          (item.SK || item.id) === sk ? { ...item, liked: false } : item
+        )
+      }));
+
       try {
         const { API, graphqlOperation } = await import('aws-amplify');
         const { removeLikeMedia } = await import('../../../graphql/publicMutations');
 
+        console.log('Removing like from audio:', audio.audioTitle);
+
         await API.graphql(
           graphqlOperation(removeLikeMedia, {
             PK: audio.PK,
-            SK: audio.SK,
+            SK: sk,
             user: auth.current.attributes.sub,
           })
         );
 
-        reloadAudioItems();
+        console.log('Like removed successfully, reloading...');
+        await reloadAudioItems();
       } catch (e) {
-        console.log(e);
+        console.error('Error removing like:', e);
+
+        // Reload to get the correct state
+        await reloadAudioItems();
+
+        // Show error message only for unexpected errors
+        if (!e.errors || e.errors[0]?.errorType !== 'DynamoDB:ConditionalCheckFailedException') {
+          const { message } = await import('antd');
+          message.error('Errore durante la rimozione del like. Riprova.');
+        }
+      } finally {
+        setLoadingLike(null);
       }
     }
   };
 
+  // Listen to auth events and reload audio items when user logs in/out
   useEffect(() => {
+    let hubListener;
+    let mounted = true;
+
+    const setupAuthListener = async () => {
+      const { Hub } = await import('aws-amplify');
+
+      hubListener = Hub.listen('auth', async (data) => {
+        const { payload } = data;
+        console.log('AudiosPoi: Auth event received:', payload.event);
+
+        if (payload.event === 'signIn' || payload.event === 'signOut') {
+          // Reload audio items to get updated liked status
+          if (payload.event === 'signIn' && mounted) {
+            await reloadAudioItems();
+          } else if (mounted) {
+            // Reset to initial state without liked status
+            setPoiAudios(poi.audioMediaItems);
+          }
+        }
+      });
+    };
+
+    setupAuthListener();
+
+    // ALWAYS check on mount if user is authenticated and reload
+    // This handles the case when user navigates back to a cached page
     if (isUserAuthenticated().current) {
+      console.log('AudiosPoi: User is authenticated on mount, reloading audio items');
       reloadAudioItems();
     }
-  }, [context]);
 
-  // Update audio items when poi changes
+    return () => {
+      mounted = false;
+      if (hubListener) {
+        import('aws-amplify').then(({ Hub }) => {
+          Hub.remove('auth', hubListener);
+        });
+      }
+    };
+  }, [poi.PK]); // Re-run when POI changes
+
+  // Update audio items when poi changes or auth changes
   useEffect(() => {
     setPoiAudios(poi.audioMediaItems);
     setAudioPlayed(false);
     setCurrentAudio(undefined);
-  }, [poi.audioMediaItems, poi.PK]);
+
+    // Reload with auth if user is logged in
+    if (isUserAuthenticated().current) {
+      reloadAudioItems();
+    }
+  }, [poi.audioMediaItems, poi.PK, context.authChanged]);
 
   return (
     <div className="audio-guides-section">
@@ -139,6 +257,9 @@ const AudiosPoi = ({ poi }) => {
         <i className="fa fa-headphones section-icon"></i>
         <IntlMessage id="poidetail.audio" />
       </h2>
+
+      {/* Call-to-action to add new content */}
+      <NewContent />
 
       <div className="audio-cards-grid">
         {audios.map((a) => (
@@ -219,10 +340,11 @@ const AudiosPoi = ({ poi }) => {
 
                 <div className="card-actions-top">
                   <button
-                    className={`like-button ${a.liked ? 'liked' : ''}`}
+                    className={`like-button ${a.liked ? 'liked' : ''} ${loadingLike === (a.SK || a.id) ? 'loading' : ''}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      if (loadingLike) return; // Prevent multiple clicks
                       if (a.liked) {
                         handleDislike(a);
                       } else {
@@ -230,8 +352,13 @@ const AudiosPoi = ({ poi }) => {
                       }
                     }}
                     title={a.liked ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+                    disabled={loadingLike === (a.SK || a.id)}
                   >
-                    <i className={`fa ${a.liked ? 'fa-heart' : 'fa-heart-o'}`}></i>
+                    {loadingLike === (a.SK || a.id) ? (
+                      <i className="fa fa-spinner fa-spin"></i>
+                    ) : (
+                      <i className={`fa ${a.liked ? 'fa-heart' : 'fa-heart-o'}`}></i>
+                    )}
                   </button>
                 </div>
               </div>
@@ -468,6 +595,19 @@ const AudiosPoi = ({ poi }) => {
 
         .like-button.liked i {
           color: #ffffff;
+        }
+
+        .like-button.loading {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        .like-button.loading:hover {
+          transform: none;
+        }
+
+        .like-button:disabled {
+          cursor: not-allowed;
         }
 
         .like-button:active {

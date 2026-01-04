@@ -12,7 +12,7 @@ import {
   EuroCircleOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons';
-import AuthLayout from '../../../src/components/layout-components/AuthLayout';
+import AppLayoutSimple from '../../../src/components/layouts/AppLayoutSimple';
 import Flex from '../../../src/components/shared-components/Flex';
 import IntlMessage from '../../../src/components/util-components/IntlMessage';
 import { CLOUDFRONT_URL } from '../../../src/constants/ApiConstant';
@@ -160,6 +160,18 @@ const GridItem = ({ data }) => {
 
 export default function PoiListPage() {
   const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to unified content page
+    router.replace('/app/content');
+  }, [router]);
+
+  return null;
+}
+
+// Old implementation below - kept for reference
+function OldPoiListPage() {
+  const router = useRouter();
   const locale = useSelector((state) => state.theme.locale);
   const [list, setList] = useState({ channel: { title: '', poiobjects: [] } });
   const [editChannel, setEditChannel] = useState(false);
@@ -293,16 +305,16 @@ export default function PoiListPage() {
 
   if (loading) {
     return (
-      <AuthLayout>
+      <AppLayoutSimple>
         <div style={{ padding: '40px', textAlign: 'center' }}>
           <p>Caricamento...</p>
         </div>
-      </AuthLayout>
+      </AppLayoutSimple>
     );
   }
 
   return (
-    <AuthLayout>
+    <AppLayoutSimple>
       <Head>
         <title>I miei POI - Civiglio</title>
       </Head>
@@ -343,6 +355,6 @@ export default function PoiListPage() {
           ))}
         </Row>
       </div>
-    </AuthLayout>
+    </AppLayoutSimple>
   );
 }

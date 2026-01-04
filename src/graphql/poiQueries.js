@@ -125,3 +125,27 @@ export const getMedia = /* GraphQL */ `
     }
   }
 `;
+
+export const getPoi = /* GraphQL */ `
+  query GetPoi($PK: String!, $SK: String!) {
+    getPoi(PK: $PK, SK: $SK) {
+      PK
+      SK
+      __typename
+      createdAt
+      id
+      lingua
+      proprietario
+      proprietario_uuid
+      titolo
+      updatedAt
+    }
+    getGeoPoi(rangeKey: $PK) {
+      immagine
+      hashKey
+      rangeKey
+      stato
+      public
+    }
+  }
+`;

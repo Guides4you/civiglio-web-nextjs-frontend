@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { Button, Row, Col, Input, Select, Modal, Alert, InputNumber } from 'antd';
+import { Button, Row, Col, Input, Select, Modal, Alert, InputNumber, Card } from 'antd';
 import { useSelector } from 'react-redux';
-import AuthLayout from '../../../../src/components/layout-components/AuthLayout';
+import AppLayoutSimple from '../../../../src/components/layouts/AppLayoutSimple';
 import POIImage from '../../../../src/components/poi-components/POIImage';
 import POIMap from '../../../../src/components/poi-components/POIMap';
 import IntlMessage from '../../../../src/components/util-components/IntlMessage';
+import UploadAudio from '../../../../src/components/audio-components/UploadAudio';
+import RecordAudioWidget2 from '../../../../src/components/audio-components/RecordAudioWidget2';
 import { CIVIGLIO_LANGUAGES, STATO_MEDIA } from '../../../../src/constants/CiviglioConstants';
 import { getMedia, listLingue } from '../../../../src/graphql/poiQueries';
 import {
@@ -33,6 +35,7 @@ export default function POIDetailPage() {
   // Form state
   const [selectedLanguage, setSelectedLanguage] = useState('it');
   const [audioLanguages, setAudioLanguages] = useState({});
+  const [audiotype, setAudiotype] = useState('');
   const [currentAudio, setCurrentAudio] = useState({
     PK: '',
     SK: '',
@@ -52,7 +55,10 @@ export default function POIDetailPage() {
   const [poiLocation, setPoiLocation] = useState({
     lat: 41.890321994610964,
     lng: 12.492220169150155,
-    title: ''
+    title: '',
+    linked: false,
+    rangeKey: null,
+    hashkey: null
   });
 
   const [modalData, setModalData] = useState({
@@ -118,7 +124,10 @@ export default function POIDetailPage() {
         setPoiLocation({
           lat: coordinate.coordinates[1],
           lng: coordinate.coordinates[0],
-          title: poiData.audioTitle
+          title: poiData.audioTitle,
+          linked: poiData.linked || false,
+          rangeKey: poiData.linked ? poiData.PK : null,
+          hashkey: poiData.geopoi.hashKey || null
         });
 
         // Load all language versions
@@ -145,6 +154,8 @@ export default function POIDetailPage() {
 
         // Set current audio data
         const current = languages[poiData.lingua] || poiData;
+        const hasAudio = current.audioFile && current.audioFile !== '';
+
         setCurrentAudio({
           PK: poiData.PK,
           SK: poiData.SK,
@@ -160,6 +171,7 @@ export default function POIDetailPage() {
           richiesta_pubblicazione: hasRequestedPublication
         });
 
+        setAudiotype(hasAudio ? 'present' : '');
         setIsCreate(false);
       } catch (error) {
         console.error('Error loading POI:', error);
@@ -220,45 +232,95 @@ export default function POIDetailPage() {
       return;
     }
 
+    if (!audiotype) {
+      Modal.error({
+        title: 'Errore',
+        content: 'Selezionare come si preferisce caricare l\'audio'
+      });
+      return;
+    }
+
+    if (!currentAudio.audioFile) {
+      Modal.error({
+        title: 'Errore',
+        content: 'Registrazione audio mancante'
+      });
+      return;
+    }
+
+    if (!currentAudio.audioExtract) {
+      Modal.error({
+        title: 'Errore',
+        content: 'Audio extract mancante (estratto di 20 secondi)'
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
       const { API, graphqlOperation } = await import('aws-amplify');
+      const axios = (await import('axios')).default;
 
       if (isCreate) {
-        // Create new POI
-        const poiInput = {
-          titolo: currentAudio.audioTitle,
-          lingua: selectedLanguage,
-          proprietario: loggedUser.username,
-          proprietario_uuid: loggedUser.attributes.sub,
-          geoJson: JSON.stringify({
-            type: 'Point',
-            coordinates: [poiLocation.lng, poiLocation.lat]
-          })
-        };
+        let guid;
 
-        const poiResponse = await API.graphql(
-          graphqlOperation(createPoi, { input: poiInput })
-        );
+        // Step 1: Create GeoPoi or use existing POI
+        if (poiLocation.linked) {
+          // Use existing POI's rangeKey
+          guid = poiLocation.rangeKey;
+        } else {
+          // Create new GeoPoi object via REST API to get UUID
+          const poiObject = {
+            lat: poiLocation.lat,
+            lng: poiLocation.lng,
+            immagine: currentAudio.immagine,
+            idproprietarioattuale: loggedUser.username,
+            tipo: '',
+            stato: 'nuovo',
+            url: '/app/poi/poidetail/',
+            dateStart: new Date().toISOString().split('T')[0],
+            dateEnd: '',
+            proprietario_uuid: loggedUser.attributes.sub
+          };
 
-        const createdPoi = poiResponse.data.createPoi;
+          const geoResponse = await axios.put(
+            'https://bgsxzp0b7a.execute-api.eu-west-1.amazonaws.com/test/poicrud',
+            poiObject
+          );
 
-        // Create audio media
+          guid = geoResponse.data.RangeKeyValue.S;
+
+          // Step 2: Create POI metadata (only for new POI)
+          const poiInput = {
+            PK: guid,
+            SK: `_${selectedLanguage}_POI`,
+            lingua: selectedLanguage,
+            titolo: currentAudio.audioTitle,
+            proprietario: loggedUser.username,
+            proprietario_uuid: loggedUser.attributes.sub
+          };
+
+          await API.graphql(
+            graphqlOperation(createPoi, { input: poiInput })
+          );
+        }
+
+        // Step 3: Create audio media (for both new and linked POI)
         const audioInput = {
-          PK: createdPoi.PK,
-          SK: createdPoi.SK,
+          PK: guid,
+          lingua: selectedLanguage,
           audioTitle: currentAudio.audioTitle,
           description: currentAudio.description,
           tags: currentAudio.tags,
           price: currentAudio.price,
           immagine: currentAudio.immagine,
-          lingua: selectedLanguage,
-          proprietario: loggedUser.username,
-          proprietario_uuid: loggedUser.attributes.sub,
           audioFile: currentAudio.audioFile,
           audioExtract: currentAudio.audioExtract,
-          stato_media: STATO_MEDIA.NUOVO
+          proprietario: loggedUser.username,
+          proprietario_uuid: loggedUser.attributes.sub,
+          linked: poiLocation.linked || false,
+          richiesta_pubblicazione: false
         };
 
         await API.graphql(
@@ -269,7 +331,7 @@ export default function POIDetailPage() {
           visible: true,
           title: 'Successo',
           text: 'POI creato con successo!',
-          onOk: () => router.push('/app/poi')
+          onOk: () => router.push('/app/content')
         });
       } else {
         // Update existing audio media
@@ -347,16 +409,16 @@ export default function POIDetailPage() {
 
   if (loading) {
     return (
-      <AuthLayout>
+      <AppLayoutSimple>
         <div style={{ padding: '40px', textAlign: 'center' }}>
           <p>Caricamento...</p>
         </div>
-      </AuthLayout>
+      </AppLayoutSimple>
     );
   }
 
   return (
-    <AuthLayout>
+    <AppLayoutSimple>
       <Head>
         <title>{isCreate ? 'Nuovo POI' : 'Modifica POI'} - Civiglio</title>
       </Head>
@@ -394,145 +456,331 @@ export default function POIDetailPage() {
           />
         )}
 
-        <Row gutter={[16, 16]}>
-          {/* Language Selection */}
-          <Col xs={24}>
-            <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
-              <IntlMessage id="poidetail3.seleziona.lingua" />
-            </label>
-            <Select
-              style={{ width: '100%' }}
-              value={selectedLanguage}
-              onChange={handleLanguageChange}
-            >
-              {CIVIGLIO_LANGUAGES.map((lang) => (
-                <Option key={lang.lang} value={lang.lang}>
-                  {lang.etichetta}
-                </Option>
-              ))}
-            </Select>
-          </Col>
+        {/* Sezione 1: Informazioni Base */}
+        <Card
+          title="Informazioni Base"
+          style={{ marginBottom: '24px' }}
+          headStyle={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff' }}
+        >
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                <IntlMessage id="poidetail3.seleziona.lingua" />
+              </label>
+              <Select
+                style={{ width: '100%' }}
+                value={selectedLanguage}
+                onChange={handleLanguageChange}
+              >
+                {CIVIGLIO_LANGUAGES.map((lang) => (
+                  <Option key={lang.lang} value={lang.lang}>
+                    {lang.etichetta}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
 
-          {/* Title */}
-          <Col xs={24}>
-            <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
-              <IntlMessage id="poidetail3.titolo.audio" /> *
-            </label>
-            <Input
-              value={currentAudio.audioTitle}
-              onChange={(e) => setCurrentAudio({ ...currentAudio, audioTitle: e.target.value })}
-              placeholder="Titolo del POI"
-            />
-          </Col>
+            <Col xs={24} md={12}>
+              <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                <IntlMessage id="poidetail3.titolo.audio" /> *
+              </label>
+              <Input
+                size="large"
+                value={currentAudio.audioTitle}
+                onChange={(e) => setCurrentAudio({ ...currentAudio, audioTitle: e.target.value })}
+                placeholder="Titolo del POI"
+              />
+            </Col>
+          </Row>
+        </Card>
 
-          {/* Description */}
-          <Col xs={24}>
-            <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
-              <IntlMessage id="poidetail3.descrizione" /> *
-            </label>
-            <TextArea
-              rows={4}
-              value={currentAudio.description}
-              onChange={(e) => setCurrentAudio({ ...currentAudio, description: e.target.value })}
-              placeholder="Descrizione del POI"
-            />
-          </Col>
+        {/* Sezione 2: Media Visivi (Immagine e Mappa) */}
+        <Card
+          title="Media Visivi"
+          style={{ marginBottom: '24px' }}
+          headStyle={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff' }}
+        >
+          <Row gutter={[24, 24]}>
+            <Col xs={24} lg={12}>
+              <POIImage
+                imageSrc={currentAudio.immagine}
+                imageAlt={currentAudio.audioTitle}
+                onFileCreated={(img) => setCurrentAudio({ ...currentAudio, immagine: img })}
+              />
+            </Col>
 
-          {/* Tags */}
-          <Col xs={24} md={12}>
-            <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
-              <IntlMessage id="poidetail3.tags" />
-            </label>
-            <Input
-              value={Array.isArray(currentAudio.tags) ? currentAudio.tags.join(', ') : ''}
-              onChange={(e) => setCurrentAudio({
-                ...currentAudio,
-                tags: e.target.value.split(',').map(t => t.trim()).filter(t => t)
-              })}
-              placeholder="arte, storia, cultura"
-            />
-          </Col>
-
-          {/* Price */}
-          <Col xs={24} md={12}>
-            <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
-              <IntlMessage id="poidetail3.prezzo" />
-            </label>
-            <InputNumber
-              style={{ width: '100%' }}
-              min={0}
-              step={0.01}
-              value={currentAudio.price}
-              onChange={(value) => setCurrentAudio({ ...currentAudio, price: value })}
-              placeholder="0.00"
-            />
-          </Col>
-
-          {/* Image */}
-          <Col xs={24} md={12}>
-            <POIImage
-              imageSrc={currentAudio.immagine}
-              imageAlt={currentAudio.audioTitle}
-              onFileCreated={(img) => setCurrentAudio({ ...currentAudio, immagine: img })}
-            />
-          </Col>
-
-          {/* Map */}
-          <Col xs={24} md={12}>
-            <div className="ant-card ant-card-bordered">
-              <div className="ant-card-head">
-                <div className="ant-card-head-title">
+            <Col xs={24} lg={12}>
+              <div style={{
+                border: '1px solid #e8e8e8',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                height: '100%',
+                minHeight: '300px'
+              }}>
+                <div style={{
+                  padding: '16px',
+                  background: '#fafafa',
+                  borderBottom: '1px solid #e8e8e8',
+                  fontWeight: 'bold'
+                }}>
                   <IntlMessage id="poidetail3.location" />
                 </div>
-              </div>
-              <div className="ant-card-body" style={{ padding: 0 }}>
                 <POIMap
                   lat={poiLocation.lat}
                   lng={poiLocation.lng}
                   title={currentAudio.audioTitle}
+                  linked={poiLocation.linked}
                   editable={isCreate || !currentAudio.PK}
                   onMapClick={(coords) => setPoiLocation({ ...poiLocation, ...coords })}
                 />
               </div>
-            </div>
-          </Col>
+            </Col>
+          </Row>
+        </Card>
 
-          {/* Action Buttons */}
-          <Col xs={24}>
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-              <Button
-                type="primary"
-                size="large"
-                onClick={handleSave}
-                loading={saving}
-              >
-                <IntlMessage id="poidetail3.salva" />
-              </Button>
+        {/* Sezione 3: Contenuto */}
+        <Card
+          title="Contenuto"
+          style={{ marginBottom: '24px' }}
+          headStyle={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff' }}
+        >
+          <Row gutter={[16, 16]}>
+            <Col xs={24}>
+              <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                <IntlMessage id="poidetail3.descrizione" /> *
+              </label>
+              <TextArea
+                rows={5}
+                value={currentAudio.description}
+                onChange={(e) => setCurrentAudio({ ...currentAudio, description: e.target.value })}
+                placeholder="Descrizione del POI"
+              />
+            </Col>
 
-              {!isCreate && currentAudio.stato_media !== STATO_MEDIA.NUOVO && (
-                <Button
-                  type="default"
+            <Col xs={24} md={12}>
+              <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                <IntlMessage id="poidetail3.tags" />
+              </label>
+              <Input
+                value={Array.isArray(currentAudio.tags) ? currentAudio.tags.join(', ') : ''}
+                onChange={(e) => setCurrentAudio({
+                  ...currentAudio,
+                  tags: e.target.value.split(',').map(t => t.trim()).filter(t => t)
+                })}
+                placeholder="arte, storia, cultura"
+              />
+            </Col>
+
+            <Col xs={24} md={12}>
+              <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                <IntlMessage id="poidetail3.prezzo" />
+              </label>
+              <InputNumber
+                style={{ width: '100%' }}
+                min={0}
+                step={0.01}
+                value={currentAudio.price}
+                onChange={(value) => setCurrentAudio({ ...currentAudio, price: value })}
+                placeholder="0.00"
+                formatter={(value) => `€ ${value}`}
+                parser={(value) => value.replace('€ ', '')}
+              />
+              <small style={{ color: '#999', display: 'block', marginTop: '4px' }}>
+                <IntlMessage id="poicontent.inserisci.zero.per.rendere.gratuito.il.tuo.contenuto" />
+              </small>
+            </Col>
+          </Row>
+        </Card>
+
+        {/* Sezione 4: File Audio */}
+        <Card
+          title="File Audio"
+          style={{ marginBottom: '24px' }}
+          headStyle={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff' }}
+        >
+          <Row gutter={[16, 24]}>
+            {/* Audio Type Selection */}
+            {audiotype !== 'present' && (
+              <Col xs={24}>
+                <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                  <IntlMessage id="poidetail3.come.preferisci.caricare.il.tuo.audio" />
+                </label>
+                <Select
                   size="large"
-                  onClick={handleRequestPublication}
-                  disabled={currentAudio.richiesta_pubblicazione}
+                  style={{ width: '100%', maxWidth: '400px' }}
+                  value={audiotype}
+                  onChange={(value) => setAudiotype(value)}
+                  placeholder="Seleziona..."
                 >
-                  {currentAudio.richiesta_pubblicazione ? (
-                    <IntlMessage id="poidetail3.pubblicazione.richiesta" />
-                  ) : (
-                    <IntlMessage id="poidetail3.richiedi.pubblicazione" />
-                  )}
-                </Button>
-              )}
+                  <Option value="">Seleziona...</Option>
+                  <Option value="upload">
+                    <IntlMessage id="poicontent.upload" />
+                  </Option>
+                  <Option value="record">
+                    <IntlMessage id="poicontent.recordhere" />
+                  </Option>
+                </Select>
+              </Col>
+            )}
 
-              <Button
-                size="large"
-                onClick={() => router.push('/app/poi')}
-              >
-                Annulla
-              </Button>
-            </div>
-          </Col>
-        </Row>
+            {/* Audio Upload/Record Section */}
+            {(audiotype === 'upload' || audiotype === 'record' || audiotype === 'present') && (
+              <>
+                <Col xs={24} lg={12}>
+                  <div style={{
+                    padding: '20px',
+                    background: '#f9fafb',
+                    borderRadius: '8px',
+                    border: '1px dashed #d9d9d9'
+                  }}>
+                    <label style={{
+                      fontWeight: 'bold',
+                      display: 'block',
+                      marginBottom: '12px',
+                      fontSize: '15px'
+                    }}>
+                      {audiotype === 'upload' ? (
+                        <IntlMessage id="poicontent.uploadaudio" />
+                      ) : (
+                        <IntlMessage id="poicontent.registraaudio" />
+                      )}
+                    </label>
+                    {(audiotype === 'record' || audiotype === 'present') && (
+                      <>
+                        <RecordAudioWidget2
+                          audioFile={currentAudio.audioFile}
+                          onFileCreated={(fname) =>
+                            setCurrentAudio({ ...currentAudio, audioFile: fname })
+                          }
+                          primary
+                          onAudioDelete={() => setCurrentAudio({ ...currentAudio, audioFile: '' })}
+                        />
+                        <small style={{ display: 'block', marginTop: '8px', color: '#666' }}>
+                          {CIVIGLIO_LANGUAGES.find(l => l.lang === selectedLanguage)?.etichetta}
+                        </small>
+                      </>
+                    )}
+                    {audiotype === 'upload' && (
+                      <>
+                        <UploadAudio
+                          name="civiglio-upload"
+                          title="Upload"
+                          audioFile={currentAudio.audioFile}
+                          onFileCreated={(fname) =>
+                            setCurrentAudio({ ...currentAudio, audioFile: fname })
+                          }
+                          primary
+                        />
+                        <small style={{ display: 'block', marginTop: '8px', color: '#666' }}>
+                          {CIVIGLIO_LANGUAGES.find(l => l.lang === selectedLanguage)?.etichetta}
+                        </small>
+                      </>
+                    )}
+                  </div>
+                </Col>
+
+                {/* Audio Extract */}
+                <Col xs={24} lg={12}>
+                  <div style={{
+                    padding: '20px',
+                    background: '#f9fafb',
+                    borderRadius: '8px',
+                    border: '1px dashed #d9d9d9'
+                  }}>
+                    <label style={{
+                      fontWeight: 'bold',
+                      display: 'block',
+                      marginBottom: '12px',
+                      fontSize: '15px'
+                    }}>
+                      {audiotype === 'upload' ? (
+                        <>Upload Preview - </>
+                      ) : (
+                        <>Registra Preview - </>
+                      )}
+                      <IntlMessage id="poicontent.estratto.di.20.secondi" />
+                    </label>
+                    {(audiotype === 'record' || audiotype === 'present') && (
+                      <>
+                        <RecordAudioWidget2
+                          audioFile={currentAudio.audioExtract}
+                          onFileCreated={(fname) =>
+                            setCurrentAudio({ ...currentAudio, audioExtract: fname })
+                          }
+                          onAudioDelete={() => setCurrentAudio({ ...currentAudio, audioExtract: '' })}
+                        />
+                        <small style={{ display: 'block', marginTop: '8px', color: '#666' }}>
+                          {CIVIGLIO_LANGUAGES.find(l => l.lang === selectedLanguage)?.etichetta} - Preview
+                        </small>
+                      </>
+                    )}
+                    {audiotype === 'upload' && (
+                      <>
+                        <UploadAudio
+                          name="civiglio-upload-preview"
+                          title="Upload preview"
+                          audioFile={currentAudio.audioExtract}
+                          onFileCreated={(fname) =>
+                            setCurrentAudio({ ...currentAudio, audioExtract: fname })
+                          }
+                        />
+                        <small style={{ display: 'block', marginTop: '8px', color: '#666' }}>
+                          {CIVIGLIO_LANGUAGES.find(l => l.lang === selectedLanguage)?.etichetta} - Preview
+                        </small>
+                      </>
+                    )}
+                  </div>
+                </Col>
+              </>
+            )}
+          </Row>
+        </Card>
+
+        {/* Action Buttons */}
+        <div style={{
+          marginTop: '24px',
+          padding: '20px',
+          background: '#fff',
+          borderRadius: '8px',
+          border: '1px solid #e8e8e8',
+          display: 'flex',
+          gap: '12px',
+          flexWrap: 'wrap'
+        }}>
+          <Button
+            type="primary"
+            size="large"
+            onClick={handleSave}
+            loading={saving}
+            style={{ minWidth: '140px' }}
+          >
+            <IntlMessage id="poidetail3.salva" />
+          </Button>
+
+          {!isCreate && currentAudio.stato_media !== STATO_MEDIA.NUOVO && (
+            <Button
+              type="default"
+              size="large"
+              onClick={handleRequestPublication}
+              disabled={currentAudio.richiesta_pubblicazione}
+              style={{ minWidth: '200px' }}
+            >
+              {currentAudio.richiesta_pubblicazione ? (
+                <IntlMessage id="poidetail3.pubblicazione.richiesta" />
+              ) : (
+                <IntlMessage id="poidetail3.richiedi.pubblicazione" />
+              )}
+            </Button>
+          )}
+
+          <Button
+            size="large"
+            onClick={() => router.push('/app/content')}
+            style={{ minWidth: '120px' }}
+          >
+            Annulla
+          </Button>
+        </div>
       </div>
 
       <Modal
@@ -543,6 +791,15 @@ export default function POIDetailPage() {
       >
         <p>{modalData.text}</p>
       </Modal>
-    </AuthLayout>
+
+      <style jsx>{`
+        .rec-timer {
+          font-size: 18px;
+          font-weight: bold;
+          color: #667eea;
+          padding-left: 12px;
+        }
+      `}</style>
+    </AppLayoutSimple>
   );
 }

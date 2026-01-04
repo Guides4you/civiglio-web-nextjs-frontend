@@ -11,3 +11,9 @@ export const STATO_MEDIA = {
   NUOVO: 'NUOVO',
   RIFIUTATO: 'RIFIUTATO'
 };
+
+// Map Constants
+export const GOOGLE_MAPS_API_KEY = 'AIzaSyCzhAJASoo4TQuH9tsKOL0zF1UzFgJUIs0';
+export const DEFAULT_MAP_ZOOM = 12;
+export const DEFAULT_HOVER_DISTANCE = 50;
+export const API_GEO_SEARCH = 'https://bgsxzp0b7a.execute-api.eu-west-1.amazonaws.com/test/searchgeo';

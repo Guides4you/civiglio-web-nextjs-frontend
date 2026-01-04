@@ -31,7 +31,7 @@ export const richiestaPubblicazioneMedia = /* GraphQL */ `
 `;
 
 export const updateAudioMedia = /* GraphQL */ `
-  mutation UpdateAudioMedia($input: AudioMediaInput) {
+  mutation UpdateAudioMedia($input: UpdateMediaInput!) {
     updateAudioMedia(input: $input) {
       PK
       SK
@@ -50,7 +50,7 @@ export const updateAudioMedia = /* GraphQL */ `
 `;
 
 export const createAudioMedia = /* GraphQL */ `
-  mutation CreateAudioMedia($input: AudioMediaInput) {
+  mutation CreateAudioMedia($input: CreateMediaInput!) {
     createAudioMedia(input: $input) {
       PK
       SK
@@ -70,7 +70,7 @@ export const createAudioMedia = /* GraphQL */ `
 `;
 
 export const createPoi = /* GraphQL */ `
-  mutation CreatePoi($input: PoiInput) {
+  mutation CreatePoi($input: CreatePoiInput!) {
     createPoi(input: $input) {
       PK
       SK
@@ -83,7 +83,7 @@ export const createPoi = /* GraphQL */ `
 `;
 
 export const updatePoi = /* GraphQL */ `
-  mutation UpdatePoi($input: PoiInput) {
+  mutation UpdatePoi($input: UpdatePoiInput!) {
     updatePoi(input: $input) {
       PK
       SK
