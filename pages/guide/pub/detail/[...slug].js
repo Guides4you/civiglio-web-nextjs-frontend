@@ -48,15 +48,53 @@ export default function POIDetailPage({ poi, popular, poiId }) {
 
   const pageTitle = poi.titolo || 'Dettaglio POI';
   const pageDescription = poi.descrizione || 'Scopri questo punto di interesse con Civiglio';
+  const pageUrl = `https://www.civiglio.it${router.asPath}`;
+  const pageImage = poi.immagine
+    ? `https://civigliowebba8ebe1e07b047938f92b0cad411ac6f221800-test.s3.eu-west-1.amazonaws.com/public/images/${poi.immagine}`
+    : 'https://www.civiglio.it/img/civiglio/logo.png';
 
   return (
     <>
       <Head>
         <title>{pageTitle} - Civiglio</title>
         <meta name="description" content={pageDescription} />
-        <meta property="og:title" content={pageTitle} />
+        <meta name="keywords" content={`${pageTitle}, audioguida, punto di interesse, turismo, cultura`} />
+
+        {/* Canonical URL */}
+        <link rel="canonical" href={pageUrl} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:title" content={`${pageTitle} - Civiglio`} />
         <meta property="og:description" content={pageDescription} />
-        {poi.immagine && <meta property="og:image" content={poi.immagine} />}
+        <meta property="og:image" content={pageImage} />
+
+        {/* Twitter Card */}
+        <meta name="twitter:url" content={pageUrl} />
+        <meta name="twitter:title" content={`${pageTitle} - Civiglio`} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={pageImage} />
+
+        {/* Structured Data - Place Schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Place',
+              name: pageTitle,
+              description: pageDescription,
+              image: pageImage,
+              ...(poi.geoCoord && {
+                geo: {
+                  '@type': 'GeoCoordinates',
+                  latitude: poi.geoCoord[1],
+                  longitude: poi.geoCoord[0]
+                }
+              })
+            })
+          }}
+        />
       </Head>
 
       <section className="single-proper blog details" key={poiId}>

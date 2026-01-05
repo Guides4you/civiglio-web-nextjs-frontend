@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Redirect - Civiglio</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #6c757d;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+        .test-section h2 {
+            font-size: 18px;
+            color: #2d3748;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+        .test-link {
+            display: block;
+            padding: 12px 16px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #495057;
+            transition: all 0.2s;
+        }
+        .test-link:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateX(4px);
+        }
+        .url-display {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #667eea;
+        }
+        .description {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .note strong {
+            color: #856404;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .success strong {
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Test Redirect URL Vecchi → Nuovi</h1>
+        <p class="subtitle">Clicca sui link per testare il redirect automatico dagli URL vecchi (con #) ai nuovi URL puliti</p>
+
+        <div class="note">
+            <strong>⚠️ Come funziona:</strong><br>
+            Quando clicchi su un link, verrai automaticamente reindirizzato alla nuova versione dell'URL senza hash (#).
+            Il redirect avviene client-side e preserva eventuali parametri query (es. ?mobile=true).
+        </div>
+
+        <div class="test-section">
+            <h2>📍 Homepage</h2>
+            <a href="/#/guide/pub/home" class="test-link">
+                <div class="url-display">/#/guide/pub/home</div>
+                <div class="description">Homepage pubblica</div>
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h2>🏛️ Pagine POI (Detail)</h2>
+            <a href="/#/guide/pub/detail/2700de67-bbc6-4e58-a3b0-63ce336a5591/Myth-of-Alaric" class="test-link">
+                <div class="url-display">/#/guide/pub/detail/2700de67-bbc6-4e58-a3b0-63ce336a5591/Myth-of-Alaric</div>
+                <div class="description">Dettaglio POI - Myth of Alaric</div>
+            </a>
+            <a href="/#/guide/pub/detail/6b8bf50c-f2a2-445a-9c17-650fbc153b0e/Gioaccchino-Greco" class="test-link">
+                <div class="url-display">/#/guide/pub/detail/6b8bf50c-f2a2-445a-9c17-650fbc153b0e/Gioaccchino-Greco</div>
+                <div class="description">Dettaglio POI - Gioaccchino Greco</div>
+            </a>
+            <a href="/#/guide/pub/poiandmedia/eb979477-0bb9-4f70-b16b-1c1f5ba4a7d8/Castell-Dell-ovo" class="test-link">
+                <div class="url-display">/#/guide/pub/poiandmedia/eb979477-0bb9-4f70-b16b-1c1f5ba4a7d8/Castell-Dell-ovo</div>
+                <div class="description">POI and Media - Castell Dell'ovo</div>
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h2>👤 Pagine Canale (Utenti)</h2>
+            <a href="/#/guide/pub/canale/62a2571c-9b36-4e70-9ec6-19a91f9e91a1" class="test-link">
+                <div class="url-display">/#/guide/pub/canale/62a2571c-9b36-4e70-9ec6-19a91f9e91a1</div>
+                <div class="description">Canale utente 1</div>
+            </a>
+            <a href="/#/guide/pub/canale/efa80750-977d-43c6-93a5-669ef71c31b6" class="test-link">
+                <div class="url-display">/#/guide/pub/canale/efa80750-977d-43c6-93a5-669ef71c31b6</div>
+                <div class="description">Canale utente 2</div>
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h2>📱 Con parametro mobile=true</h2>
+            <a href="/#/guide/pub/home?mobile=true" class="test-link">
+                <div class="url-display">/#/guide/pub/home?mobile=true</div>
+                <div class="description">Homepage in modalità mobile (senza header/footer)</div>
+            </a>
+            <a href="/#/guide/pub/detail/2700de67-bbc6-4e58-a3b0-63ce336a5591/Myth-of-Alaric?mobile=true" class="test-link">
+                <div class="url-display">/#/guide/pub/detail/2700de67-bbc6-4e58-a3b0-63ce336a5591/Myth-of-Alaric?mobile=true</div>
+                <div class="description">POI in modalità mobile</div>
+            </a>
+        </div>
+
+        <div class="success">
+            <strong>✅ Cosa aspettarsi:</strong><br>
+            • L'URL nella barra del browser cambierà rimuovendo il # <br>
+            • La pagina si caricherà normalmente<br>
+            • I parametri query (es. ?mobile=true) verranno preservati<br>
+            • Nessun errore 404<br>
+            • Redirect trasparente per l'utente
+        </div>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e9ecef;">
+            <h3 style="font-size: 16px; color: #2d3748;">📝 Note Tecniche</h3>
+            <ul style="color: #6c757d; line-height: 1.8;">
+                <li>Il redirect avviene in <code>_app.js</code> tramite <code>useEffect</code></li>
+                <li>Utilizza <code>router.replace()</code> per non creare nuove entry nella history</li>
+                <li>Compatibile con tutti i browser moderni</li>
+                <li>SEO-friendly: Google indicizzerà solo i nuovi URL puliti</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Log per debug
+        console.log('Current URL:', window.location.href);
+        console.log('Hash:', window.location.hash);
+
+        if (window.location.hash.startsWith('#/')) {
+            console.log('🔄 Old hash-based URL detected - redirect will happen automatically');
+        }
+    </script>
+</body>
+</html>

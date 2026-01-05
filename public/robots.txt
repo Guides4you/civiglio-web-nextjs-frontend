@@ -13,4 +13,5 @@ Disallow: /test/*
 Disallow: /api/*
 
 # Sitemap
-Sitemap: https://www.civiglioweb.com/sitemap.xml
+Sitemap: https://www.civiglio.it/sitemap.xml
+Sitemap: https://civiglio.it/sitemap.xml

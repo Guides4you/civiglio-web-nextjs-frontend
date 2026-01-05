@@ -18,8 +18,8 @@ export default function Home() {
       fontFamily: 'Arial, sans-serif'
     }}>
       <div style={{ textAlign: 'center' }}>
-        <h1>Civiglio Web</h1>
-        <p>Redirecting to guide...</p>
+        <h1>Civiglio</h1>
+        <p>Ascolta il tuo territorio ...</p>
       </div>
     </div>
   );

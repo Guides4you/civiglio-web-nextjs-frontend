@@ -28,6 +28,16 @@ const nextConfig = {
   // Disabilita source maps in produzione (come React)
   productionBrowserSourceMaps: false,
 
+  // Rewrites per SEO
+  async rewrites() {
+    return [
+      {
+        source: '/sitemap.xml',
+        destination: '/api/sitemap.xml',
+      },
+    ];
+  },
+
   // Webpack config custom (necessario per AWS Amplify)
   webpack: (config, { isServer }) => {
     // Fix per moduli che usano fs/path/child_process/http2 (necessario per Amplify)
