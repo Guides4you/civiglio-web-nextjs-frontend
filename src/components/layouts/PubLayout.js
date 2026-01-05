@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import dynamic from 'next/dynamic';
 
 // Componenti migrati e SSR-safe
@@ -193,6 +194,19 @@ export const PubLayout = ({ children, locale }) => {
 
   return (
     <div id="wrapper" className="listeo">
+      <Head>
+        {isMobile ? (
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+          />
+        ) : (
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          />
+        )}
+      </Head>
       <SignInDiv />
       {/* Header migrato e SSR-safe */}
       {isMobile === false && <HeaderNew />}
