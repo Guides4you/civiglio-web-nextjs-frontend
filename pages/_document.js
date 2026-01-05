@@ -5,6 +5,21 @@ export default function Document() {
     <Html lang="it">
       <Head>
         <meta charSet="UTF-8" />
+
+        {/* SEO Meta Tags - Default values, can be overridden per page */}
+        <meta name="description" content="Civiglio - Scopri luoghi, storie e audioguide interattive. Esplora il patrimonio culturale attraverso contenuti audio creati da guide esperte." />
+        <meta name="keywords" content="audioguide, guide turistiche, luoghi storici, cultura, patrimonio, turismo, audio tour" />
+        <meta name="author" content="Civiglio" />
+        <meta name="robots" content="index, follow" />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Civiglio" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+
+        {/* Favicon and Icons */}
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/logo192.png" />
         <link rel="manifest" href="/manifest.json" />

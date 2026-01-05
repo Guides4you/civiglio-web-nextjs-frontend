@@ -44,12 +44,32 @@ const POICarousel = dynamic(
 // POICard e POIListPlaceholder sono stati sostituiti dal nuovo POICarousel component
 
 export default function HomePage({ pois }) {
+  const pageUrl = 'https://www.civiglio.it/guide/pub/home';
+  const pageTitle = 'Civiglio - Ascolta la storia, vivi la cultura';
+  const pageDescription = 'Civiglio trasformiamo i vostri beni culturali in risorse per il futuro. Scopri audioguide interattive e luoghi storici da esplorare.';
+  const pageImage = 'https://www.civiglio.it/img/civiglio/logo.png';
+
   return (
     <>
       <Head>
-        <title>Civiglio - Ascolta la storia, vivi la cultura.</title>
-        <meta name="description" content="Civiglio trasformiamo i vostri beni culturali in risorse per il futuro." />
-        <meta name="keywords" content="Civiglio, Beni Culturali, Riqualificazione Borghi, Valorizzazione Punti di Interesse" />
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta name="keywords" content="Civiglio, Beni Culturali, Riqualificazione Borghi, Valorizzazione Punti di Interesse, audioguide, guide turistiche" />
+
+        {/* Canonical URL */}
+        <link rel="canonical" href={pageUrl} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:image" content={pageImage} />
+
+        {/* Twitter Card */}
+        <meta name="twitter:url" content={pageUrl} />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={pageImage} />
       </Head>
 
       <div>

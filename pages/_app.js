@@ -57,6 +57,31 @@ function MyApp({ Component, pageProps }) {
   const router = useRouter();
   const { pathname } = router;
 
+  // Redirect from old hash-based routes to new clean URLs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const hash = window.location.hash;
+
+    // Check if there's a hash that looks like an old route
+    if (hash && hash.startsWith('#/')) {
+      // Extract the path from hash (remove the #)
+      const newPath = hash.substring(1);
+
+      // Extract query parameters if present
+      const [pathPart, queryPart] = newPath.split('?');
+
+      console.log('🔄 Redirecting from old hash route:', hash, '→', pathPart);
+
+      // Replace current URL with new clean URL
+      if (queryPart) {
+        router.replace(`${pathPart}?${queryPart}`);
+      } else {
+        router.replace(pathPart);
+      }
+    }
+  }, [router]);
+
   useEffect(() => {
     // Configura Amplify solo lato client con dynamic import
     if (typeof window !== 'undefined') {

@@ -44,6 +44,16 @@ export const PubLayout = ({ children, locale }) => {
   const mounted = useRef(false);
   const user = useRef(undefined);
   const [authChanged, setAuthChanged] = useState(0); // Trigger re-render on auth change
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const mobileCheck = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      setIsMobileDevice(mobileCheck);
+    }
+  }, []);
 
   const handlePlayerReady = (playerMethods) => {
     audioPlayerInstance.current = playerMethods;
@@ -192,10 +202,12 @@ export const PubLayout = ({ children, locale }) => {
     return user;
   };
 
+  const shouldDisableZoom = isMobile || isMobileDevice;
+
   return (
     <div id="wrapper" className="listeo">
       <Head>
-        {isMobile ? (
+        {shouldDisableZoom ? (
           <meta
             name="viewport"
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
