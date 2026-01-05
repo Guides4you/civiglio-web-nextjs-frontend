@@ -13,12 +13,15 @@ const PicturesPoi = ({ poi, mapRef }) => {
   const [address, setAddress] = useState("");
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [lightboxVisible, setLightboxVisible] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const { locale } = useSelector((state) => state.theme);
   const [emblaMainRef, emblaMainApi] = useEmblaCarousel({ loop: true });
   const [emblaThumbsRef, emblaThumbsApi] = useEmblaCarousel({
     containScroll: "keepSnaps",
     dragFree: true,
   });
+  const [emblaLightboxRef, emblaLightboxApi] = useEmblaCarousel({ loop: true });
 
   const onThumbClick = useCallback(
     (index) => {
@@ -75,6 +78,54 @@ const PicturesPoi = ({ poi, mapRef }) => {
     emblaMainApi.on("select", onSelect);
     emblaMainApi.on("reInit", onSelect);
   }, [emblaMainApi, onSelect]);
+
+  // Lightbox functions
+  const openLightbox = (index) => {
+    setLightboxIndex(index);
+    setLightboxVisible(true);
+    setTimeout(() => {
+      if (emblaLightboxApi) {
+        emblaLightboxApi.scrollTo(index);
+      }
+    }, 100);
+  };
+
+  const closeLightbox = () => {
+    setLightboxVisible(false);
+  };
+
+  const scrollPrevLightbox = useCallback(() => {
+    if (emblaLightboxApi) emblaLightboxApi.scrollPrev();
+  }, [emblaLightboxApi]);
+
+  const scrollNextLightbox = useCallback(() => {
+    if (emblaLightboxApi) emblaLightboxApi.scrollNext();
+  }, [emblaLightboxApi]);
+
+  const onLightboxSelect = useCallback(() => {
+    if (!emblaLightboxApi) return;
+    setLightboxIndex(emblaLightboxApi.selectedScrollSnap());
+  }, [emblaLightboxApi]);
+
+  useEffect(() => {
+    if (!emblaLightboxApi) return;
+    onLightboxSelect();
+    emblaLightboxApi.on("select", onLightboxSelect);
+  }, [emblaLightboxApi, onLightboxSelect]);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxVisible) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') scrollPrevLightbox();
+      if (e.key === 'ArrowRight') scrollNextLightbox();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxVisible, scrollPrevLightbox, scrollNextLightbox]);
 
   // Share functionality
   const handleShare = async () => {
@@ -235,6 +286,10 @@ const PicturesPoi = ({ poi, mapRef }) => {
                 <i className="fa fa-share-alt"></i>
                 <span>Condividi</span>
               </button>
+              <button className="action-btn" title="Visualizza foto" onClick={() => openLightbox(selectedIndex)}>
+                <i className="fa fa-expand"></i>
+                <span>Visualizza foto</span>
+              </button>
             </div>
           </div>
         </div>
@@ -318,6 +373,87 @@ const PicturesPoi = ({ poi, mapRef }) => {
               <span>Copia Link</span>
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Lightbox Modal */}
+      <Modal
+        open={lightboxVisible}
+        onCancel={closeLightbox}
+        footer={null}
+        width="100%"
+        centered
+        className="lightbox-modal"
+        closeIcon={
+          <div className="lightbox-close-btn">
+            <i className="fa fa-times"></i>
+          </div>
+        }
+      >
+        <div className="lightbox-container">
+          {/* Image Counter */}
+          <div className="lightbox-counter">
+            {lightboxIndex + 1} / {images.length}
+          </div>
+
+          {/* Carousel */}
+          <div className="lightbox-carousel">
+            <div className="embla__viewport" ref={emblaLightboxRef}>
+              <div className="embla__container">
+                {images.map((img, i) => (
+                  <div className="embla__slide" key={i}>
+                    <div className="lightbox-image-wrapper">
+                      <img
+                        src={`${CLOUDFRONT_URL}/images/${img}`}
+                        alt={`${poi.titolo} - Image ${i + 1}`}
+                        className="lightbox-image"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Navigation Arrows */}
+            {images.length > 1 && (
+              <>
+                <button
+                  className="lightbox-nav lightbox-nav-prev"
+                  onClick={scrollPrevLightbox}
+                  aria-label="Previous image"
+                >
+                  <i className="fa fa-chevron-left"></i>
+                </button>
+                <button
+                  className="lightbox-nav lightbox-nav-next"
+                  onClick={scrollNextLightbox}
+                  aria-label="Next image"
+                >
+                  <i className="fa fa-chevron-right"></i>
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Thumbnails */}
+          {images.length > 1 && (
+            <div className="lightbox-thumbnails">
+              {images.map((img, i) => (
+                <div
+                  key={i}
+                  className={`lightbox-thumb ${i === lightboxIndex ? 'lightbox-thumb-active' : ''}`}
+                  onClick={() => {
+                    if (emblaLightboxApi) emblaLightboxApi.scrollTo(i);
+                  }}
+                >
+                  <img
+                    src={`${CLOUDFRONT_URL}/images/${img}`}
+                    alt={`Thumbnail ${i + 1}`}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </Modal>
 
@@ -424,6 +560,283 @@ const PicturesPoi = ({ poi, mapRef }) => {
             padding: 24px 16px;
           }
         }
+
+        /* Lightbox Modal Styles */
+        .lightbox-modal .ant-modal {
+          max-width: 100vw !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          top: 0 !important;
+        }
+
+        .lightbox-modal .ant-modal-content {
+          background: rgba(0, 0, 0, 0.98);
+          border-radius: 0;
+          box-shadow: none;
+          height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .lightbox-modal .ant-modal-body {
+          padding: 0;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .lightbox-modal .ant-modal-close {
+          top: 20px;
+          right: 20px;
+          color: #ffffff;
+          z-index: 1001;
+        }
+
+        .lightbox-modal .ant-modal-close:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .lightbox-close-btn {
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 50%;
+          transition: all 0.3s ease;
+        }
+
+        .lightbox-close-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+          transform: rotate(90deg);
+        }
+
+        .lightbox-close-btn i {
+          font-size: 24px;
+        }
+
+        .lightbox-container {
+          width: 100%;
+          height: 100%;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .lightbox-counter {
+          position: absolute;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(10px);
+          color: #ffffff;
+          padding: 8px 20px;
+          border-radius: 20px;
+          font-size: 16px;
+          font-weight: 600;
+          z-index: 1000;
+          letter-spacing: 1px;
+        }
+
+        .lightbox-carousel {
+          flex: 1;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 80px 20px 120px;
+        }
+
+        .lightbox-carousel .embla__viewport {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .lightbox-carousel .embla__container {
+          display: flex;
+          height: 100%;
+          align-items: center;
+        }
+
+        .lightbox-carousel .embla__slide {
+          flex: 0 0 100%;
+          min-width: 0;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .lightbox-image-wrapper {
+          max-width: 100%;
+          max-height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .lightbox-image {
+          max-width: 100%;
+          max-height: calc(100vh - 200px);
+          width: auto;
+          height: auto;
+          object-fit: contain;
+          border-radius: 4px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .lightbox-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 56px;
+          height: 56px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          border-radius: 50%;
+          color: #ffffff;
+          font-size: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          z-index: 1000;
+        }
+
+        .lightbox-nav:hover {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.4);
+          transform: translateY(-50%) scale(1.1);
+        }
+
+        .lightbox-nav:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+
+        .lightbox-nav-prev {
+          left: 20px;
+        }
+
+        .lightbox-nav-next {
+          right: 20px;
+        }
+
+        .lightbox-thumbnails {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 12px;
+          padding: 12px;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(10px);
+          border-radius: 12px;
+          max-width: 90%;
+          overflow-x: auto;
+          z-index: 1000;
+        }
+
+        .lightbox-thumbnails::-webkit-scrollbar {
+          height: 4px;
+        }
+
+        .lightbox-thumbnails::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 2px;
+        }
+
+        .lightbox-thumbnails::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 2px;
+        }
+
+        .lightbox-thumb {
+          flex-shrink: 0;
+          width: 80px;
+          height: 60px;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 3px solid transparent;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          opacity: 0.5;
+        }
+
+        .lightbox-thumb:hover {
+          opacity: 0.8;
+          border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .lightbox-thumb-active {
+          opacity: 1;
+          border-color: #667eea;
+          box-shadow: 0 0 12px rgba(102, 126, 234, 0.8);
+        }
+
+        .lightbox-thumb img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        @media (max-width: 768px) {
+          .lightbox-counter {
+            top: 12px;
+            font-size: 14px;
+            padding: 6px 16px;
+          }
+
+          .lightbox-carousel {
+            padding: 60px 12px 100px;
+          }
+
+          .lightbox-image {
+            max-height: calc(100vh - 160px);
+          }
+
+          .lightbox-nav {
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+          }
+
+          .lightbox-nav-prev {
+            left: 12px;
+          }
+
+          .lightbox-nav-next {
+            right: 12px;
+          }
+
+          .lightbox-thumbnails {
+            bottom: 12px;
+            gap: 8px;
+            padding: 8px;
+          }
+
+          .lightbox-thumb {
+            width: 60px;
+            height: 45px;
+          }
+
+          .lightbox-close-btn {
+            width: 40px;
+            height: 40px;
+          }
+
+          .lightbox-close-btn i {
+            font-size: 20px;
+          }
+        }
       `}</style>
 
       <style jsx>{`
@@ -475,6 +888,7 @@ const PicturesPoi = ({ poi, mapRef }) => {
           display: flex;
           align-items: center;
           justify-content: center;
+          position: relative;
         }
 
         :global(.hero-carousel .hero-image) {

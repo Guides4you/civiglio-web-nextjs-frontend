@@ -33,13 +33,16 @@ const AppDownloadBanner = () => {
 
     const hasClosedBanner = localStorage.getItem('hasClosedBanner');
     const isMobileParam = getQueryParam('mobile') === 'true';
+    const isMobileSession = sessionStorage.getItem('civiglio_mobile_mode') === 'true';
 
     console.log('isAndroid:', isAndroid);
     console.log('isIOS:', isIOS);
     console.log('hasClosedBanner:', hasClosedBanner);
     console.log('mobile param:', isMobileParam);
+    console.log('mobile session:', isMobileSession);
 
-    if ((isAndroid || isIOS) && hasClosedBanner !== 'true' && !isMobileParam) {
+    // Don't show banner if: mobile param is true OR mobile session is active
+    if ((isAndroid || isIOS) && hasClosedBanner !== 'true' && !isMobileParam && !isMobileSession) {
       const timer = setTimeout(() => {
         console.log('Mostrando banner...');
         setIsVisible(true);

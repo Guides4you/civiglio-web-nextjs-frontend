@@ -32,7 +32,6 @@ const CiviglioProvider = CiviglioContext.Provider;
 export const PubLayout = ({ children, locale }) => {
   const router = useRouter();
   const { mobile } = router.query;
-  const isMobile = mobile === 'true';
 
   const audioPlayerInstance = useRef(null);
   const loginDivRef = useRef(null);
@@ -45,6 +44,24 @@ export const PubLayout = ({ children, locale }) => {
   const user = useRef(undefined);
   const [authChanged, setAuthChanged] = useState(0); // Trigger re-render on auth change
   const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [isMobileMode, setIsMobileMode] = useState(false);
+
+  // Persistent mobile mode: save to sessionStorage when detected
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Check if mobile=true in URL query
+    if (mobile === 'true') {
+      sessionStorage.setItem('civiglio_mobile_mode', 'true');
+      setIsMobileMode(true);
+    } else {
+      // Check if mobile mode was previously set in session
+      const storedMobileMode = sessionStorage.getItem('civiglio_mobile_mode');
+      if (storedMobileMode === 'true') {
+        setIsMobileMode(true);
+      }
+    }
+  }, [mobile]);
 
   // Detect mobile device
   useEffect(() => {
@@ -202,7 +219,7 @@ export const PubLayout = ({ children, locale }) => {
     return user;
   };
 
-  const shouldDisableZoom = isMobile || isMobileDevice;
+  const shouldDisableZoom = isMobileMode || isMobileDevice;
 
   return (
     <div id="wrapper" className="listeo">
@@ -221,7 +238,7 @@ export const PubLayout = ({ children, locale }) => {
       </Head>
       <SignInDiv />
       {/* Header migrato e SSR-safe */}
-      {isMobile === false && <HeaderNew />}
+      {isMobileMode === false && <HeaderNew />}
       <div>
         <div style={{ overflow: 'hidden' }}>
           <CiviglioProvider
@@ -250,9 +267,9 @@ export const PubLayout = ({ children, locale }) => {
         </div>
       </div>
       {/* Footer migrato e SSR-safe */}
-      {isMobile === false && <Footer />}
+      {isMobileMode === false && <Footer />}
       {/* App Download Banner - shown only on mobile devices */}
-      {isMobile === false && <AppDownloadBanner />}
+      {isMobileMode === false && <AppDownloadBanner />}
     </div>
   );
 };
