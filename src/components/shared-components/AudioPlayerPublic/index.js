@@ -25,9 +25,22 @@ const AudioPlayerPublic = ({ locale, onAudioEnded, onPauseAudio, onPlayAudio, sh
       // Will play audioExtract instead
     }
 
+    // Pause current audio first (if any)
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause();
+    }
+
+    // Force state change by briefly setting to false, then true
+    // This ensures the useEffect is triggered even if already playing
+    setIsPlaying(false);
     setCurrentAudio(audioObject);
     setIsVisible(true);
-    setIsPlaying(true);
+
+    // Use setTimeout to ensure React processes the state change
+    setTimeout(() => {
+      setIsPlaying(true);
+    }, 0);
+
     return true;
   };
 

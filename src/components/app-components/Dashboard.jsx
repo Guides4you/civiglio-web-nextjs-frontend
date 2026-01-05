@@ -25,19 +25,45 @@ const Dashboard = () => {
       try {
         const { Auth } = await import('aws-amplify');
         const currentUser = await Auth.currentAuthenticatedUser();
+        const userInfo = await Auth.currentUserInfo();
         setUser(currentUser);
 
-        // Fetch user's media
-        const response = await API.graphql(
-          graphqlOperation(listMediaByProprietario, {
-            filter: {
-              proprietario_uuid: currentUser.attributes.sub,
-            },
-            limit: 100, // Adjust if needed
-          })
-        );
+        // Fetch user's media for all languages
+        const allItems = [];
+        const languages = ['it', 'en', 'fr'];
 
-        const items = response.data.listMediaByProprietario.items || [];
+        for (const lang of languages) {
+          try {
+            const parameters = {
+              filter: {
+                lingua: lang,
+                proprietario: userInfo.username,
+              },
+            };
+
+            const response = await API.graphql(
+              graphqlOperation(listMediaByProprietario, parameters)
+            );
+
+            const langItems = response.data.listMediaByProprietario.items || [];
+            allItems.push(...langItems);
+          } catch (err) {
+            console.warn(`Error loading ${lang} content:`, err.message);
+            // Continue with next language
+          }
+        }
+
+        const items = allItems;
+
+        // Debug: Log the first item to see the data structure
+        console.log('=== DASHBOARD DEBUG ===');
+        console.log('Total items fetched:', items.length);
+        if (items.length > 0) {
+          console.log('First item structure:', items[0]);
+          console.log('First item geopoi:', items[0].geopoi);
+          console.log('First item stato_media:', items[0].stato_media);
+          console.log('First item richiesta_pubblicazione:', items[0].richiesta_pubblicazione);
+        }
 
         // Calculate statistics
         const stats = {
@@ -51,6 +77,9 @@ const Dashboard = () => {
           totalPlays: items.reduce((sum, item) => sum + (item.geopoi?.listen || 0), 0),
         };
 
+        console.log('Calculated stats:', stats);
+        console.log('======================');
+
         setStats(stats);
 
         // Get recent content (last 5)
@@ -60,6 +89,10 @@ const Dashboard = () => {
         setRecentContent(recent);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        if (error.errors) {
+          console.error('GraphQL errors:', error.errors);
+        }
       } finally {
         setLoading(false);
       }
@@ -198,16 +231,20 @@ const Dashboard = () => {
             <div className="recent-content-list">
               {recentContent.map((item) => {
                 const badge = getStatusBadge(item);
+                // Format: PK__SK (without leading underscore from SK)
+                const skPart = item.SK.startsWith('_') ? item.SK.substring(1) : item.SK;
+                const detailUrl = `/app/poi/poidetail/${item.PK}__${skPart}`;
+
                 return (
                   <div
                     key={item.SK}
                     className="content-item"
-                    onClick={() => router.push(`/app/poi/poidetail/${item.PK}`)}
+                    onClick={() => router.push(detailUrl)}
                   >
                     <div className="content-image">
                       {item.immagine ? (
                         <img
-                          src={`${CLOUDFRONT_URL}/images/mediaitem/${item.immagine}`}
+                          src={`${CLOUDFRONT_URL}/images/${item.immagine}`}
                           alt={item.audioTitle}
                         />
                       ) : (
