@@ -1,0 +1,45 @@
+Resolver modificato manualmente  da console aws  appsync
+Resolver: getLastPoiForHome(...): GeoPoiConnection 
+
+  {
+      "version" : "2017-02-28",
+      "operation" : "Query",
+      "index": "tipo-home-index",
+      "query":{
+          "expression" : "tipo = :tipo AND home = :home",
+          "expressionValues":{
+              ":tipo" : $util.dynamodb.toDynamoDBJson("GEOPOI"),
+              ":home" : {
+                  "S": "true"
+              }
+          }
+      },
+      "scanIndexForward" : false,
+      "limit": $util.defaultIfNull(${ctx.args.limit}, 6),
+      "nextToken": $util.toJson($util.defaultIfNullOrBlank($ctx.args.nextToken, null))
+  }
+
+
+  Schema aggiunto attributo home manualmente da console aws appsync
+
+  type GeoPoi @aws_api_key
+@aws_cognito_user_pools {
+	geohash: Float
+	geoJson: String
+	hashKey: String
+	immagine: String
+	proprietario: String
+	proprietario_uuid: String
+	rangeKey: String
+	stato: String
+	tipo: String
+	url: String
+	follower: Float
+	likes: Float
+	listen: Float
+	dateStart: String
+	dateEnd: String
+	public: String
+	home: String
+	audioMediaItems: AudioMediaConnection
+}
