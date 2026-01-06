@@ -18,8 +18,9 @@ const LoginPage = () => {
       import('aws-amplify').then(({ Auth }) => {
         Auth.currentAuthenticatedUser()
           .then(() => {
-            // Already logged in, redirect to app
-            router.push('/app/home');
+            // Already logged in, redirect to requested page or app home
+            const redirectTo = router.query.redirect || '/app/home';
+            router.push(redirectTo);
           })
           .catch(() => {
             // Not logged in, stay on page
@@ -38,8 +39,10 @@ const LoginPage = () => {
 
       console.log('Login successful:', user);
 
-      // Redirect to app
-      router.push('/app/home');
+      // Redirect to requested page or app home
+      const redirectTo = router.query.redirect || '/app/home';
+      console.log('Redirecting to:', redirectTo);
+      router.push(redirectTo);
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Errore durante il login. Riprova.');

@@ -1,21 +1,35 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useRouter } from 'next/router';
 import IntlMessage from '../../util-components/IntlMessage';
 import { message } from 'antd';
+import { CiviglioContext } from '../../layouts/PubLayout';
 
 /**
  * NewContent Component - Call-to-action for users to share new content
  *
  * Displays an invitation card encouraging users to contribute audio guides
- * to the POI. Redirects to the content creation page.
+ * to the POI. Redirects to the content creation page if user is authenticated,
+ * otherwise shows login page.
  */
 const NewContent = () => {
   const router = useRouter();
+  const context = useContext(CiviglioContext);
   const [messageApi, contextHolder] = message.useMessage();
   const isMobile = JSON.parse(router.query.mobile || 'false');
 
   const handleClick = (e) => {
     e.preventDefault();
+
+    // Check if user is authenticated
+    const user = context.getUser();
+    if (!user || !user.current) {
+      console.log('NewContent: User not authenticated, showing login');
+      // Show login page if user is not authenticated
+      context.showLogin();
+      return;
+    }
+
+    console.log('NewContent: User authenticated, redirecting to /app/home');
 
     // Optional: Show error message for mobile users
     // Currently disabled - mobile users can also create content
@@ -28,7 +42,7 @@ const NewContent = () => {
     //   return;
     // }
 
-    // Redirect to content creation page
+    // Redirect to content creation page (now protected by AppLayoutSimple)
     router.push('/app/home');
   };
 
