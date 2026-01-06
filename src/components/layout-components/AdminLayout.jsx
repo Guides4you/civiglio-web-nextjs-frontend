@@ -14,8 +14,8 @@ const AdminLayout = ({ children }) => {
         const isAuth = await isAuthenticated();
 
         if (!isAuth) {
-          // Not authenticated, redirect to login
-          router.push('/auth/login');
+          // Not authenticated, redirect to login with return URL
+          router.push('/auth/login?redirect=' + encodeURIComponent(router.asPath));
           return;
         }
 
@@ -33,7 +33,7 @@ const AdminLayout = ({ children }) => {
         setAuthorized(true);
       } catch (error) {
         console.error('Admin auth check failed:', error);
-        router.push('/auth/login');
+        router.push('/auth/login?redirect=' + encodeURIComponent(router.asPath));
       } finally {
         setLoading(false);
       }

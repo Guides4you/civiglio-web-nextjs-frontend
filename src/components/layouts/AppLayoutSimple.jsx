@@ -8,6 +8,33 @@ import IntlMessage from '../util-components/IntlMessage';
 const AppLayoutSimple = ({ children }) => {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { Auth } = await import('aws-amplify');
+        const user = await Auth.currentAuthenticatedUser();
+
+        if (user) {
+          console.log('AppLayoutSimple: User is authenticated:', user.username);
+          setIsAuthenticated(true);
+        } else {
+          console.log('AppLayoutSimple: No authenticated user, redirecting to login');
+          router.replace('/auth/login?redirect=' + encodeURIComponent(router.asPath));
+        }
+      } catch (error) {
+        console.log('AppLayoutSimple: Authentication check failed, redirecting to login:', error);
+        router.replace('/auth/login?redirect=' + encodeURIComponent(router.asPath));
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -35,6 +62,70 @@ const AppLayoutSimple = ({ children }) => {
       label: 'app.menu.profile',
     },
   ];
+
+  // Show loading state while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div id="wrapper" className="listeo">
+        <div className="auth-loading-container">
+          <div className="auth-loading">
+            <div className="loading-spinner">
+              <div className="spinner"></div>
+              <p>Verifica autenticazione...</p>
+            </div>
+          </div>
+
+          <style jsx>{`
+            .auth-loading-container {
+              min-height: 100vh;
+              background: #f5f7fa;
+            }
+
+            .auth-loading {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+            }
+
+            .loading-spinner {
+              text-align: center;
+            }
+
+            .spinner {
+              width: 50px;
+              height: 50px;
+              margin: 0 auto 20px;
+              border: 4px solid rgba(102, 126, 234, 0.2);
+              border-top: 4px solid #667eea;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+            }
+
+            @keyframes spin {
+              0% {
+                transform: rotate(0deg);
+              }
+              100% {
+                transform: rotate(360deg);
+              }
+            }
+
+            .loading-spinner p {
+              color: #667eea;
+              font-size: 16px;
+              font-weight: 500;
+            }
+          `}</style>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if not authenticated (redirect is in progress)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div id="wrapper" className="listeo">
