@@ -444,8 +444,29 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
     searchNearbyPOIs(location);
   };
 
+  // Calcola zoom appropriato in base al raggio di ricerca
+  const getZoomForRadius = (radius) => {
+    // Mappatura raggio (metri) → zoom level
+    if (radius <= 1000) return 15;       // 1km
+    if (radius <= 2000) return 14;       // 2km
+    if (radius <= 5000) return 13;       // 5km
+    if (radius <= 10000) return 12;      // 10km
+    if (radius <= 20000) return 11;      // 20km
+    return 10;                            // 50km
+  };
+
   const handleRadiusChange = (newRadius) => {
     setSearchRadius(newRadius);
+
+    // Calcola e imposta lo zoom appropriato
+    const newZoom = getZoomForRadius(newRadius);
+    setZoom(newZoom);
+
+    // Aggiorna lo zoom sulla mappa se disponibile
+    if (map) {
+      map.setZoom(newZoom);
+      console.log(`🔍 Raggio cambiato a ${newRadius / 1000}km, zoom impostato a ${newZoom}`);
+    }
 
     // Re-search con il nuovo raggio se c'è un centro attivo
     if (nearbyPois.length > 0 || center.lat !== 41.9102415) {
