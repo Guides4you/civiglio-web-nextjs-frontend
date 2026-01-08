@@ -30,6 +30,8 @@ const RadiusSelector = ({ value = 5000, onChange }) => {
 
   const handleChange = (newValue) => {
     onChange && onChange(newValue);
+    // Chiudi il popup dopo la selezione
+    setIsExpanded(false);
   };
 
   return (
