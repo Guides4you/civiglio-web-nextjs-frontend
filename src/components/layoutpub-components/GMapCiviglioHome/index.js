@@ -321,6 +321,24 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
             setNewMarkerIds(newIds);
             setTimeout(() => setNewMarkerIds(new Set()), 600);
 
+            // Auto-centra la mappa sui POI cached
+            if (data.length > 0 && map && maps) {
+              const bounds = new maps.LatLngBounds();
+
+              data.forEach(poi => {
+                bounds.extend(new maps.LatLng(poi.lat, poi.lng));
+              });
+
+              map.fitBounds(bounds, {
+                top: 80,
+                right: 50,
+                bottom: 50,
+                left: 50
+              });
+
+              console.log('🎯 Mappa centrata su POI cached');
+            }
+
             message.success(`${data.length} POI trovati (dalla cache)`);
             return;
           } else {
@@ -452,6 +470,25 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
 
         setNearbyPois(validPois);
         console.log('✅ nearbyPois state updated with', validPois.length, 'POIs');
+
+        // Auto-centra la mappa sui POI trovati usando bounds
+        if (validPois.length > 0 && map && maps) {
+          const bounds = new maps.LatLngBounds();
+
+          validPois.forEach(poi => {
+            bounds.extend(new maps.LatLng(poi.lat, poi.lng));
+          });
+
+          // FitBounds con padding per non tagliare i marker ai bordi
+          map.fitBounds(bounds, {
+            top: 80,      // Spazio per header/controlli
+            right: 50,
+            bottom: 50,
+            left: 50
+          });
+
+          console.log('🎯 Mappa centrata automaticamente sui', validPois.length, 'POI trovati');
+        }
 
         // Salva in cache
         try {
@@ -645,7 +682,12 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
               {
                 featureType: 'poi',
                 elementType: 'labels',
-                stylers: [{ visibility: 'on' }]
+                stylers: [{ visibility: 'off' }]
+              },
+              {
+                featureType: 'poi',
+                elementType: 'labels.icon',
+                stylers: [{ visibility: 'off' }]
               }
             ]
           }}
