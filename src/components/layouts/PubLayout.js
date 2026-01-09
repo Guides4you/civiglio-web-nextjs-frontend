@@ -45,6 +45,8 @@ export const PubLayout = ({ children, locale }) => {
   const [authChanged, setAuthChanged] = useState(0); // Trigger re-render on auth change
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [isMobileMode, setIsMobileMode] = useState(false);
+  const [avatarPopupOpen, setAvatarPopupOpen] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
 
   // Persistent mobile mode: save to sessionStorage when detected
   useEffect(() => {
@@ -71,6 +73,33 @@ export const PubLayout = ({ children, locale }) => {
       setIsMobileDevice(mobileCheck);
     }
   }, []);
+
+  // Load user info for avatar
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      if (typeof window === 'undefined') return;
+
+      try {
+        const { Auth } = await import('aws-amplify');
+        const currentUser = await Auth.currentAuthenticatedUser();
+
+        if (currentUser) {
+          const { attributes } = currentUser;
+          setUserInfo({
+            name: attributes.name || attributes.email?.split('@')[0] || 'User',
+            email: attributes.email,
+            username: currentUser.username
+          });
+        } else {
+          setUserInfo(null);
+        }
+      } catch (error) {
+        setUserInfo(null);
+      }
+    };
+
+    loadUserInfo();
+  }, [authChanged]);
 
   const handlePlayerReady = (playerMethods) => {
     audioPlayerInstance.current = playerMethods;
@@ -219,6 +248,28 @@ export const PubLayout = ({ children, locale }) => {
     return user;
   };
 
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const handleAvatarLogout = async () => {
+    try {
+      const { Auth } = await import('aws-amplify');
+      await Auth.signOut();
+      setUserInfo(null);
+      setAvatarPopupOpen(false);
+      sessionStorage.removeItem('civiglio_mobile_mode');
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   const shouldDisableZoom = isMobileMode || isMobileDevice;
 
   return (
@@ -270,6 +321,282 @@ export const PubLayout = ({ children, locale }) => {
       {isMobileMode === false && <Footer />}
       {/* App Download Banner - shown only on mobile devices */}
       {isMobileMode === false && <AppDownloadBanner />}
+
+      {/* Avatar Floating Button - Mobile Mode Only */}
+      {isMobileMode && (
+        <>
+          <button
+            className="avatar-floating-button"
+            onClick={() => setAvatarPopupOpen(!avatarPopupOpen)}
+            aria-label={userInfo ? "Menu utente" : "Accedi"}
+          >
+            {userInfo ? (
+              <>
+                <span className="avatar-initials">{getInitials(userInfo.name)}</span>
+                <span className="avatar-badge"></span>
+              </>
+            ) : (
+              <i className="fa fa-user"></i>
+            )}
+          </button>
+
+          {/* Avatar Popup */}
+          {avatarPopupOpen && (
+            <>
+              <div
+                className="avatar-popup-overlay"
+                onClick={() => setAvatarPopupOpen(false)}
+              ></div>
+              <div className="avatar-popup">
+                {userInfo ? (
+                  <>
+                    <div className="avatar-popup-header">
+                      <span className="avatar-greeting">Ciao {userInfo.name.split(' ')[0]}! ✨</span>
+                    </div>
+                    <div className="avatar-popup-actions">
+                      <a
+                        href="/app/home"
+                        className="avatar-action-link"
+                        onClick={() => setAvatarPopupOpen(false)}
+                      >
+                        <i className="fa fa-home"></i>
+                        <span>Area Personale</span>
+                      </a>
+                      <button
+                        className="avatar-action-button logout"
+                        onClick={handleAvatarLogout}
+                      >
+                        <i className="fa fa-sign-out"></i>
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="avatar-popup-login">
+                    <p className="avatar-login-text">Accedi per gestire i tuoi contenuti</p>
+                    <a
+                      href="/auth/login"
+                      className="avatar-login-button"
+                      onClick={() => setAvatarPopupOpen(false)}
+                    >
+                      <i className="fa fa-sign-in"></i>
+                      <span>Accedi</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          <style jsx>{`
+            /* ========== Avatar Floating Button ========== */
+            .avatar-floating-button {
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              width: 50px;
+              height: 50px;
+              border-radius: 50%;
+              background: ${userInfo
+                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                : 'linear-gradient(135deg, #718096 0%, #4a5568 100%)'};
+              color: white;
+              border: none;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+              cursor: pointer;
+              z-index: 1000;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: ${userInfo ? '18px' : '20px'};
+              font-weight: 600;
+              transition: all 0.3s ease;
+              position: relative;
+            }
+
+            .avatar-floating-button:hover {
+              transform: scale(1.1);
+              box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            }
+
+            .avatar-floating-button:active {
+              transform: scale(0.95);
+            }
+
+            .avatar-initials {
+              font-size: 18px;
+              font-weight: 700;
+              letter-spacing: 0.5px;
+            }
+
+            .avatar-badge {
+              position: absolute;
+              bottom: 2px;
+              right: 2px;
+              width: 14px;
+              height: 14px;
+              background: #48bb78;
+              border: 3px solid white;
+              border-radius: 50%;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+
+            /* ========== Avatar Popup Overlay ========== */
+            .avatar-popup-overlay {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.3);
+              z-index: 1999;
+              animation: fadeIn 0.2s ease;
+            }
+
+            /* ========== Avatar Popup ========== */
+            .avatar-popup {
+              position: fixed;
+              top: 80px;
+              right: 20px;
+              background: white;
+              border-radius: 16px;
+              box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+              min-width: 260px;
+              z-index: 2000;
+              animation: slideDown 0.3s ease;
+              overflow: hidden;
+            }
+
+            .avatar-popup-header {
+              padding: 20px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+            }
+
+            .avatar-greeting {
+              font-size: 16px;
+              font-weight: 600;
+              display: block;
+            }
+
+            .avatar-popup-actions {
+              padding: 12px;
+            }
+
+            .avatar-action-link,
+            .avatar-action-button {
+              width: 100%;
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              padding: 14px 16px;
+              border: none;
+              background: transparent;
+              text-decoration: none;
+              color: #2d3748;
+              font-size: 15px;
+              font-weight: 500;
+              border-radius: 10px;
+              cursor: pointer;
+              transition: background 0.2s ease;
+              margin-bottom: 6px;
+            }
+
+            .avatar-action-link:hover,
+            .avatar-action-button:hover {
+              background: #f7fafc;
+            }
+
+            .avatar-action-link i,
+            .avatar-action-button i {
+              width: 24px;
+              text-align: center;
+              font-size: 18px;
+              color: #667eea;
+            }
+
+            .avatar-action-button.logout i {
+              color: #f56565;
+            }
+
+            .avatar-action-button:last-child {
+              margin-bottom: 0;
+            }
+
+            /* ========== Login State ========== */
+            .avatar-popup-login {
+              padding: 24px;
+              text-align: center;
+            }
+
+            .avatar-login-text {
+              color: #4a5568;
+              font-size: 14px;
+              margin-bottom: 16px;
+              line-height: 1.5;
+            }
+
+            .avatar-login-button {
+              display: inline-flex;
+              align-items: center;
+              gap: 10px;
+              padding: 12px 24px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              border: none;
+              border-radius: 10px;
+              font-size: 15px;
+              font-weight: 600;
+              text-decoration: none;
+              cursor: pointer;
+              transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .avatar-login-button:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            }
+
+            .avatar-login-button:active {
+              transform: translateY(0);
+            }
+
+            .avatar-login-button i {
+              font-size: 16px;
+            }
+
+            /* ========== Animations ========== */
+            @keyframes fadeIn {
+              from {
+                opacity: 0;
+              }
+              to {
+                opacity: 1;
+              }
+            }
+
+            @keyframes slideDown {
+              from {
+                opacity: 0;
+                transform: translateY(-10px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+
+            /* ========== Responsive ========== */
+            @media (max-width: 575px) {
+              .avatar-popup {
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+              }
+            }
+          `}</style>
+        </>
+      )}
     </div>
   );
 };
