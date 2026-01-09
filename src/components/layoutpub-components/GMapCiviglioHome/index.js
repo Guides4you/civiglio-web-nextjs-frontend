@@ -300,6 +300,38 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
     setIsSearching(true);
 
     try {
+      // Cache key basata su posizione arrotondata (4 decimali = ~11 metri di precisione)
+      const cacheKey = `poi_search_${location.lat.toFixed(4)}_${location.lng.toFixed(4)}_${radius}`;
+      const CACHE_TTL = 60 * 60 * 1000; // 60 minuti
+
+      // Controlla cache
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          const age = Date.now() - timestamp;
+
+          if (age < CACHE_TTL) {
+            console.log(`🎯 Using cached POIs (age: ${Math.round(age / 1000)}s)`);
+            setNearbyPois(data);
+            setIsSearching(false);
+
+            // Identifica nuovi marker per animazione
+            const newIds = new Set(data.map(p => p.rangeKey));
+            setNewMarkerIds(newIds);
+            setTimeout(() => setNewMarkerIds(new Set()), 600);
+
+            message.success(`${data.length} POI trovati (dalla cache)`);
+            return;
+          } else {
+            console.log('⏰ Cache expired, fetching fresh data');
+          }
+        }
+      } catch (cacheError) {
+        console.warn('⚠️ Cache read error:', cacheError);
+        // Continua con la chiamata API normale
+      }
+
       // Chiamata API per cercare POI vicini
       const response = await axios.get(
         `${API_GEO_SEARCH}?r=${radius}&lat=${location.lat}&lng=${location.lng}`
@@ -420,6 +452,19 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
 
         setNearbyPois(validPois);
         console.log('✅ nearbyPois state updated with', validPois.length, 'POIs');
+
+        // Salva in cache
+        try {
+          const cacheData = {
+            data: validPois,
+            timestamp: Date.now()
+          };
+          sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+          console.log('💾 POIs saved to cache');
+        } catch (cacheError) {
+          console.warn('⚠️ Cache write error:', cacheError);
+          // Non bloccare l'esecuzione se il salvataggio cache fallisce
+        }
 
         message.success(`${validPois.length} POI trovati nel raggio di ${radius/1000}km`);
       } else {
