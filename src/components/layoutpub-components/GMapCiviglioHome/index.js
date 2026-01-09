@@ -678,6 +678,7 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
             streetViewControl: false,
             rotateControl: false,
             fullscreenControl: true,
+            clickableIcons: false,
             styles: [
               {
                 featureType: 'poi',
@@ -686,6 +687,16 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
               },
               {
                 featureType: 'poi',
+                elementType: 'labels.icon',
+                stylers: [{ visibility: 'off' }]
+              },
+              {
+                featureType: 'transit',
+                elementType: 'labels',
+                stylers: [{ visibility: 'off' }]
+              },
+              {
+                featureType: 'transit',
                 elementType: 'labels.icon',
                 stylers: [{ visibility: 'off' }]
               }
@@ -924,7 +935,7 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
         /* ========== Responsive ========== */
         @media (max-width: 767px) {
           .map-container {
-            height: 400px;
+            height: 80vh;
             border-radius: 8px;
           }
 
@@ -937,7 +948,7 @@ const GMapCiviglioHome = ({ pois: initialPois = [] }) => {
 
         @media (max-width: 575px) {
           .map-container {
-            height: 350px;
+            height: 80vh;
             border-radius: 0;
           }
 
