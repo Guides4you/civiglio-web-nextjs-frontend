@@ -92,7 +92,7 @@ const RadiusSelector = ({ value = 5000, onChange }) => {
         /* ========== Radius Selector Container ========== */
         .radius-selector {
           position: absolute;
-          top: 80px;
+          top: 85px;
           right: 20px;
           z-index: 10;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -249,7 +249,7 @@ const RadiusSelector = ({ value = 5000, onChange }) => {
         /* ========== Responsive ========== */
         @media (max-width: 767px) {
           .radius-selector {
-            top: 70px;
+            top: 75px;
             right: 15px;
           }
 
@@ -266,7 +266,7 @@ const RadiusSelector = ({ value = 5000, onChange }) => {
 
         @media (max-width: 575px) {
           .radius-selector {
-            top: 60px;
+            top: 65px;
             right: 10px;
           }
 
