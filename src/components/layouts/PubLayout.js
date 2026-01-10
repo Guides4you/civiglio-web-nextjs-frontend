@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { connect } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
+import { onLocaleChange } from '../../redux/actions/Theme';
+import langData from '../../assets/data/language.data.json';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 
@@ -47,6 +49,10 @@ export const PubLayout = ({ children, locale }) => {
   const [isMobileMode, setIsMobileMode] = useState(false);
   const [avatarPopupOpen, setAvatarPopupOpen] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+
+  const dispatch = useDispatch();
+  const currentLocale = useSelector(state => state.theme?.locale) || 'it';
 
   // Persistent mobile mode: save to sessionStorage when detected
   useEffect(() => {
@@ -330,7 +336,7 @@ export const PubLayout = ({ children, locale }) => {
             className={`avatar-floating-button ${userInfo ? 'logged-in' : 'logged-out'}`}
             onClick={() => setAvatarPopupOpen(!avatarPopupOpen)}
             aria-label={userInfo ? "Menu utente" : "Accedi"}
-            style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}
+            style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 1000 }}
           >
             {userInfo ? (
               <>
@@ -350,6 +356,13 @@ export const PubLayout = ({ children, locale }) => {
                 onClick={() => setAvatarPopupOpen(false)}
               ></div>
               <div className="avatar-popup">
+                <button
+                  className="avatar-popup-close"
+                  onClick={() => setAvatarPopupOpen(false)}
+                  aria-label="Chiudi"
+                >
+                  <i className="fa fa-times"></i>
+                </button>
                 {userInfo ? (
                   <>
                     <div className="avatar-popup-header">
@@ -364,6 +377,24 @@ export const PubLayout = ({ children, locale }) => {
                         <i className="fa fa-home"></i>
                         <span>Area Personale</span>
                       </a>
+
+                      {/* Language Selector */}
+                      <div className="avatar-lang-section">
+                        <span className="avatar-lang-label">Lingua</span>
+                        <div className="avatar-lang-options">
+                          {langData.map((lang) => (
+                            <button
+                              key={lang.langId}
+                              className={`avatar-lang-btn ${currentLocale === lang.langId ? 'active' : ''}`}
+                              onClick={() => dispatch(onLocaleChange(lang.langId))}
+                            >
+                              <img src={`/img/flags/${lang.icon}.png`} alt={lang.langName} />
+                              <span>{lang.lang}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <button
                         className="avatar-action-button logout"
                         onClick={handleAvatarLogout}
@@ -384,6 +415,23 @@ export const PubLayout = ({ children, locale }) => {
                       <i className="fa fa-sign-in"></i>
                       <span>Accedi</span>
                     </a>
+
+                    {/* Language Selector */}
+                    <div className="avatar-lang-section" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+                      <span className="avatar-lang-label">Lingua</span>
+                      <div className="avatar-lang-options">
+                        {langData.map((lang) => (
+                          <button
+                            key={lang.langId}
+                            className={`avatar-lang-btn ${currentLocale === lang.langId ? 'active' : ''}`}
+                            onClick={() => dispatch(onLocaleChange(lang.langId))}
+                          >
+                            <img src={`/img/flags/${lang.icon}.png`} alt={lang.langName} />
+                            <span>{lang.lang}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -464,8 +512,8 @@ export const PubLayout = ({ children, locale }) => {
             /* ========== Avatar Popup ========== */
             .avatar-popup {
               position: fixed;
-              top: 80px;
-              right: 20px;
+              top: 70px;
+              right: 10px;
               background: white;
               border-radius: 16px;
               box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
@@ -473,6 +521,41 @@ export const PubLayout = ({ children, locale }) => {
               z-index: 2000;
               animation: slideDown 0.3s ease;
               overflow: hidden;
+            }
+
+            .avatar-popup-close {
+              position: absolute;
+              top: 12px;
+              right: 12px;
+              width: 28px;
+              height: 28px;
+              border: none;
+              background: rgba(255, 255, 255, 0.2);
+              border-radius: 50%;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-size: 14px;
+              transition: background 0.2s ease;
+              z-index: 1;
+            }
+
+            .avatar-popup-close:hover {
+              background: rgba(255, 255, 255, 0.3);
+            }
+
+            /* Stile per popup senza header (utente non loggato) */
+            .avatar-popup-login .avatar-popup-close,
+            .avatar-popup:not(:has(.avatar-popup-header)) .avatar-popup-close {
+              background: #f0f0f0;
+              color: #4a5568;
+            }
+
+            .avatar-popup-login .avatar-popup-close:hover,
+            .avatar-popup:not(:has(.avatar-popup-header)) .avatar-popup-close:hover {
+              background: #e2e8f0;
             }
 
             .avatar-popup-header {
@@ -529,6 +612,70 @@ export const PubLayout = ({ children, locale }) => {
 
             .avatar-action-button:last-child {
               margin-bottom: 0;
+            }
+
+            /* ========== Language Selector ========== */
+            .avatar-lang-section {
+              padding: 12px 16px;
+              border-top: 1px solid #e2e8f0;
+              margin-top: 6px;
+            }
+
+            .avatar-lang-label {
+              display: block;
+              font-size: 12px;
+              font-weight: 600;
+              color: #718096;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 10px;
+            }
+
+            .avatar-lang-options {
+              display: flex;
+              gap: 8px;
+            }
+
+            .avatar-lang-btn {
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 6px;
+              padding: 10px 12px;
+              border: 2px solid #e2e8f0;
+              border-radius: 8px;
+              background: white;
+              cursor: pointer;
+              transition: all 0.2s ease;
+            }
+
+            .avatar-lang-btn img {
+              width: 20px;
+              height: 14px;
+              object-fit: cover;
+              border-radius: 2px;
+            }
+
+            .avatar-lang-btn span {
+              font-size: 13px;
+              font-weight: 500;
+              color: #4a5568;
+            }
+
+            .avatar-lang-btn:hover {
+              border-color: #667eea;
+              background: #f7fafc;
+            }
+
+            .avatar-lang-btn.active {
+              border-color: #667eea;
+              background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            }
+
+            .avatar-lang-btn.active span {
+              color: #667eea;
+              font-weight: 600;
             }
 
             /* ========== Login State ========== */
