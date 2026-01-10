@@ -326,7 +326,7 @@ export const PubLayout = ({ children, locale }) => {
       {isMobileMode && (
         <>
           <button
-            className="avatar-floating-button"
+            className={`avatar-floating-button ${userInfo ? 'logged-in' : 'logged-out'}`}
             onClick={() => setAvatarPopupOpen(!avatarPopupOpen)}
             aria-label={userInfo ? "Menu utente" : "Accedi"}
           >
@@ -397,9 +397,6 @@ export const PubLayout = ({ children, locale }) => {
               width: 50px;
               height: 50px;
               border-radius: 50%;
-              background: ${userInfo
-                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                : 'linear-gradient(135deg, #718096 0%, #4a5568 100%)'};
               color: white;
               border: none;
               box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -408,10 +405,19 @@ export const PubLayout = ({ children, locale }) => {
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: ${userInfo ? '18px' : '20px'};
               font-weight: 600;
               transition: all 0.3s ease;
               position: relative;
+            }
+
+            .avatar-floating-button.logged-in {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              font-size: 18px;
+            }
+
+            .avatar-floating-button.logged-out {
+              background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+              font-size: 20px;
             }
 
             .avatar-floating-button:hover {
