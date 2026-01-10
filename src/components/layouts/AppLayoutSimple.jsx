@@ -17,6 +17,7 @@ const AppLayoutSimple = ({ children }) => {
   // Persistent mobile mode: save to sessionStorage when detected
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!router.isReady) return; // Wait for router to be ready on SSG pages
 
     // Check if mobile=true in URL query
     if (mobile === 'true') {
@@ -29,7 +30,7 @@ const AppLayoutSimple = ({ children }) => {
         setIsMobileMode(true);
       }
     }
-  }, [mobile]);
+  }, [router.isReady, mobile]);
 
   // Check authentication on mount
   useEffect(() => {

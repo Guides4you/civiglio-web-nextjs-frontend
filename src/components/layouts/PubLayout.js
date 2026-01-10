@@ -51,6 +51,7 @@ export const PubLayout = ({ children, locale }) => {
   // Persistent mobile mode: save to sessionStorage when detected
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!router.isReady) return; // Wait for router to be ready on SSG pages
 
     // Check if mobile=true in URL query
     if (mobile === 'true') {
@@ -63,7 +64,7 @@ export const PubLayout = ({ children, locale }) => {
         setIsMobileMode(true);
       }
     }
-  }, [mobile]);
+  }, [router.isReady, mobile]);
 
   // Detect mobile device
   useEffect(() => {
@@ -329,6 +330,7 @@ export const PubLayout = ({ children, locale }) => {
             className={`avatar-floating-button ${userInfo ? 'logged-in' : 'logged-out'}`}
             onClick={() => setAvatarPopupOpen(!avatarPopupOpen)}
             aria-label={userInfo ? "Menu utente" : "Accedi"}
+            style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000 }}
           >
             {userInfo ? (
               <>
